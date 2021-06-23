@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
+use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
@@ -18,6 +19,7 @@ final class PayWithSavedTokenResponse
 
     /**
      * Holds guzzle response decoded body
+     *
      * @var object
      */
     private $body;
@@ -32,9 +34,9 @@ final class PayWithSavedTokenResponse
     /**
      * Parses guzzle response body
      *
-     * @param string $response json string response body
+     * @param Response $response json string response body
      */
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 
@@ -45,8 +47,6 @@ final class PayWithSavedTokenResponse
 
     /**
      * Getter for failed flag
-     *
-     * @return bool
      */
     public function failed(): bool
     {
@@ -55,8 +55,6 @@ final class PayWithSavedTokenResponse
 
     /**
      * Returns response status code
-     *
-     * @return string
      */
     public function getStatusCode(): int
     {
@@ -65,8 +63,6 @@ final class PayWithSavedTokenResponse
 
     /**
      * Return card token
-     *
-     * @return string
      */
     public function getPaymentKeyToken(): string
     {
@@ -78,11 +74,17 @@ final class PayWithSavedTokenResponse
         switch ($this->response->getStatusCode()) {
             case '401':
                 $this->failed = true;
-                throw new UnauthenticatedException(json_encode($this->body), $this->response->getStatusCode());
+                throw new UnauthenticatedException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
                 break;
             case '400':
                 $this->failed = true;
-                throw new InvalidPaymentException(json_encode($this->body), $this->response->getStatusCode());
+                throw new InvalidPaymentException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
             default:
                 break;
         }

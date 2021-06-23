@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use Zeal\Paymob\Exceptions\UnauthenticatedException;
+use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentKeyException;
+use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
 final class PaymentKeyResponse
 {
@@ -18,6 +19,7 @@ final class PaymentKeyResponse
 
     /**
      * Holds guzzle response decoded body
+     *
      * @var object
      */
     private $body;
@@ -32,9 +34,9 @@ final class PaymentKeyResponse
     /**
      * Parses guzzle response body
      *
-     * @param string $response json string response body
+     * @param Response $response json string response body
      */
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 
@@ -45,8 +47,6 @@ final class PaymentKeyResponse
 
     /**
      * Getter for failed flag
-     *
-     * @return bool
      */
     public function failed(): bool
     {
@@ -55,34 +55,36 @@ final class PaymentKeyResponse
 
     /**
      * Returns response status code
-     *
-     * @return string
      */
-    public function getStatusCode()
+    public function getStatusCode(): int
     {
         return $this->response->getStatusCode();
     }
 
     /**
      * Return card token
-     *
-     * @return string
      */
-    public function getPaymentKeyToken()
+    public function getPaymentKeyToken(): string
     {
         return $this->body->token;
     }
 
-    private function handleResponseExceptions()
+    private function handleResponseExceptions(): void
     {
         switch ($this->response->getStatusCode()) {
             case '400':
                 $this->failed = true;
-                throw new InvalidPaymentKeyException(json_encode($this->body), $this->response->getStatusCode());
+                throw new InvalidPaymentKeyException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
                 break;
             case '401':
                 $this->failed = true;
-                throw new UnauthenticatedException(json_encode($this->body), $this->response->getStatusCode());
+                throw new UnauthenticatedException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
             default:
                 break;
         }

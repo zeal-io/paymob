@@ -10,26 +10,24 @@ use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
 use Zeal\Paymob\Response\CheckoutResponse;
 use Zeal\Paymob\Response\CreateOrderResponse;
-use Zeal\Paymob\Response\PayWithSavedTokenResponse;
 use Zeal\Paymob\Response\PaymentKeyResponse;
-use Zeal\Paymob\Response\RefundResponse;
+use Zeal\Paymob\Response\PayWithSavedTokenResponse;
 
 final class Paymob
 {
-    public $orderId;
     /**
-     * Paymob API Credentails
+     * Order id returned from paymob
      *
-     * @var array
+     * @var int
      */
-    private $credentials;
+    public $orderId;
 
     /**
      * Base API Endpont
      *
      * @var string
      */
-    private $api = "https://accept.paymob.com/api/";
+    private $api = 'https://accept.paymob.com/api/';
 
     /**
      * Message Send Response
@@ -45,18 +43,14 @@ final class Paymob
      */
     private $http;
 
-    private $apiKey;
-
     public function __construct(string $apiKey)
     {
-        $this->apiKey = $apiKey;
-
         $this->http = new Client([
             'base_uri' => $this->api,
             'http_errors' => false,
             'defaults' => [
                 'headers' => ['Content-Type' => 'application/json'],
-            ]
+            ],
         ]);
 
         $this->authenticate($apiKey);
@@ -68,13 +62,13 @@ final class Paymob
     {
         $response = $this->http->request('POST', 'ecommerce/orders', [
             'json' => [
-                "auth_token" => $this->authToken,
-                "delivery_needed" => $order->deliveryNeeded,
-                "amount_cents" => $order->amount,
-                "currency" => $order->currency,
-                "merchant_order_id" => $order->orderId,
-                "items" => $order->items
-            ]
+                'auth_token' => $this->authToken,
+                'delivery_needed' => $order->deliveryNeeded,
+                'amount_cents' => $order->amount,
+                'currency' => $order->currency,
+                'merchant_order_id' => $order->orderId,
+                'items' => $order->items,
+            ],
         ]);
 
         $this->response = new CreateOrderResponse($response);
@@ -87,32 +81,31 @@ final class Paymob
      * Check out an order
      *
      * @param array  $data order details
-     * @return Paymob
      */
-    public function createPaymentKey(PaymentKey $paymentKey)
+    public function createPaymentKey(PaymentKey $paymentKey): Paymob
     {
-        $response = $this->http->request('POST', "acceptance/payment_keys", [
+        $response = $this->http->request('POST', 'acceptance/payment_keys', [
             'json' => [
-                "auth_token" => $this->authToken,
-                "amount_cents" => $paymentKey->amount,
-                "expiration" => $paymentKey->expiration,
-                "order_id" => $paymentKey->orderId,
-                "currency" => $paymentKey->currency,
-                "integration_id" => $paymentKey->integrationId,
-                "billing_data" => [
-                    "apartment" => "NA",
-                    "email" => "NA",
-                    "floor" => "NA",
-                    "first_name" => "NA",
-                    "street" => "NA",
-                    "building" => "NA",
-                    "phone_number" => "NA",
-                    "shipping_method" => "NA",
-                    "postal_code" => "NA",
-                    "city" => "NA",
-                    "country" => "NA",
-                    "last_name" => "NA",
-                    "state" => "NA"
+                'auth_token' => $this->authToken,
+                'amount_cents' => $paymentKey->amount,
+                'expiration' => $paymentKey->expiration,
+                'order_id' => $paymentKey->orderId,
+                'currency' => $paymentKey->currency,
+                'integration_id' => $paymentKey->integrationId,
+                'billing_data' => [
+                    'apartment' => 'NA',
+                    'email' => 'NA',
+                    'floor' => 'NA',
+                    'first_name' => 'NA',
+                    'street' => 'NA',
+                    'building' => 'NA',
+                    'phone_number' => 'NA',
+                    'shipping_method' => 'NA',
+                    'postal_code' => 'NA',
+                    'city' => 'NA',
+                    'country' => 'NA',
+                    'last_name' => 'NA',
+                    'state' => 'NA',
                 ],
             ],
         ]);
@@ -123,23 +116,22 @@ final class Paymob
         return $this;
     }
 
-    public function payWithSavedToken(string $cardToken)
+    public function payWithSavedToken(string $cardToken): Paymob
     {
-        $response = $this->http->request('POST', "acceptance/payments/pay", [
+        $response = $this->http->request('POST', 'acceptance/payments/pay', [
             'json' => [
-                "source" => [
-                    "identifier" => $cardToken,
-                    "subtype" => "TOKEN"
+                'source' => [
+                    'identifier' => $cardToken,
+                    'subtype' => 'TOKEN',
                 ],
-                "payment_token" => $this->paymentKeyToken,
-            ]
+                'payment_token' => $this->paymentKeyToken,
+            ],
         ]);
 
         $this->response = new PayWithSavedTokenResponse($response);
 
         return $this;
     }
-
 
     /**
      * Response getter
@@ -151,11 +143,11 @@ final class Paymob
         return $this->response;
     }
 
-    private function authenticate(string $apiKey)
+    private function authenticate(string $apiKey): Paymob
     {
-        $response = $this->http->request('POST', "auth/tokens", [
+        $response = $this->http->request('POST', 'auth/tokens', [
             'json' => [
-                "api_key" => $apiKey,
+                'api_key' => $apiKey,
             ],
         ]);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
+use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidAuthenticationException;
 
 final class AuthenticationResponse
@@ -17,6 +18,7 @@ final class AuthenticationResponse
 
     /**
      * Holds guzzle response decoded body
+     *
      * @var object
      */
     private $body;
@@ -31,25 +33,19 @@ final class AuthenticationResponse
     /**
      * Parses guzzle response body
      *
-     * @param string $response json string response body
+     * @param Response $response json string response body
      */
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 
         $this->body = json_decode((string) $response->getBody());
 
-
-        if ($this->response->getStatusCode() != 201) {
-            $this->failed = true;
-            throw new InvalidAuthenticationException($this->body->detail, $this->response->getStatusCode());
-        }
+        $this->handleResponseExceptions();
     }
 
     /**
      * Getter for failed flag
-     *
-     * @return bool
      */
     public function failed(): bool
     {
@@ -58,21 +54,28 @@ final class AuthenticationResponse
 
     /**
      * Returns response status code
-     *
-     * @return string
      */
-    public function getStatusCode()
+    public function getStatusCode(): string
     {
         return $this->response->getStatusCode();
     }
 
     /**
      * Return card token
-     *
-     * @return string
      */
-    public function getAuthToken()
+    public function getAuthToken(): string
     {
         return $this->body->token;
+    }
+
+    private function handleResponseExceptions(): void
+    {
+        if ($this->response->getStatusCode() !== 201) {
+            $this->failed = true;
+            throw new InvalidAuthenticationException(
+                json_encode($this->body),
+                $this->response->getStatusCode()
+            );
+        }
     }
 }

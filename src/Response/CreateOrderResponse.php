@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
+use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidOrderException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
@@ -18,6 +19,7 @@ final class CreateOrderResponse
 
     /**
      * Holds guzzle response decoded body
+     *
      * @var object
      */
     private $body;
@@ -32,9 +34,9 @@ final class CreateOrderResponse
     /**
      * Parses guzzle response body
      *
-     * @param string $response json string response body
+     * @param GuzzleHttp\Psr7\Response $response json string response body
      */
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 
@@ -45,8 +47,6 @@ final class CreateOrderResponse
 
     /**
      * Getter for failed flag
-     *
-     * @return bool
      */
     public function failed(): bool
     {
@@ -55,37 +55,43 @@ final class CreateOrderResponse
 
     /**
      * Returns response status code
-     *
-     * @return string
      */
-    public function getStatusCode()
+    public function getStatusCode(): string
     {
         return $this->response->getStatusCode();
     }
 
     /**
      * Return card token
-     *
-     * @return string
      */
-    public function getOrderId()
+    public function getOrderId(): string
     {
-        return $this->body->id;
+        return (string) $this->body->id;
     }
 
-    private function handleResponseExceptions()
+    private function handleResponseExceptions(): void
     {
         switch ($this->response->getStatusCode()) {
             case '422':
                 $this->failed = true;
-                throw new InvalidOrderException($this->body->message, $this->response->getStatusCode());
+                throw new InvalidOrderException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
                 break;
             case '400':
-                throw new InvalidOrderException(json_encode($this->body), $this->response->getStatusCode());
+                $this->failed = true;
+                throw new InvalidOrderException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
                 break;
             case '401':
                 $this->failed = true;
-                throw new UnauthenticatedException($this->body->detail, $this->response->getStatusCode());
+                throw new UnauthenticatedException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
             default:
                 break;
         }
