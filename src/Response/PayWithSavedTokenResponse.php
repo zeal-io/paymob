@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use Zeal\Paymob\Exceptions\InvalidAuthenticationException;
+use Zeal\Paymob\Exceptions\InvalidPaymentException;
+use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
-final class AuthenticationResponse
+final class PayWithSavedTokenResponse
 {
     /**
      * Hold encoded guzzle response
@@ -39,11 +40,7 @@ final class AuthenticationResponse
 
         $this->body = json_decode((string) $response->getBody());
 
-
-        if ($this->response->getStatusCode() != 201) {
-            $this->failed = true;
-            throw new InvalidAuthenticationException($this->body->detail, $this->response->getStatusCode());
-        }
+        $this->handleResponseExceptions();
     }
 
     /**
@@ -61,7 +58,7 @@ final class AuthenticationResponse
      *
      * @return string
      */
-    public function getStatusCode()
+    public function getStatusCode(): int
     {
         return $this->response->getStatusCode();
     }
@@ -71,8 +68,23 @@ final class AuthenticationResponse
      *
      * @return string
      */
-    public function getAuthToken()
+    public function getPaymentKeyToken(): string
     {
         return $this->body->token;
+    }
+
+    private function handleResponseExceptions(): void
+    {
+        switch ($this->response->getStatusCode()) {
+            case '401':
+                $this->failed = true;
+                throw new UnauthenticatedException(json_encode($this->body), $this->response->getStatusCode());
+                break;
+            case '400':
+                $this->failed = true;
+                throw new InvalidPaymentException(json_encode($this->body), $this->response->getStatusCode());
+            default:
+                break;
+        }
     }
 }

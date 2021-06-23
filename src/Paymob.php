@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace Zeal\Paymob;
 
 use GuzzleHttp\Client;
-use Zeal\Paymob\Response\CheckoutResponse;
-use Zeal\Paymob\Response\RefundResponse;
+use Zeal\Paymob\Models\PaymentKey;
+use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
+use Zeal\Paymob\Response\CheckoutResponse;
+use Zeal\Paymob\Response\CreateOrderResponse;
+use Zeal\Paymob\Response\PayWithSavedTokenResponse;
+use Zeal\Paymob\Response\PaymentKeyResponse;
+use Zeal\Paymob\Response\RefundResponse;
 
 final class Paymob
 {
+    public $orderId;
     /**
      * Paymob API Credentails
      *
@@ -58,17 +64,23 @@ final class Paymob
         return $this;
     }
 
-    public function createOrder(PaymentOrder $order)
+    public function createOrder(PaymentOrder $order): Paymob
     {
-        $this->dd($order);
-        $orders = Http::withHeaders(['Content-Type' => 'application/json'])->post("https://accept.paymob.com/api/ecommerce/orders", [
-            "auth_token" => $this->authToken,
-            "delivery_needed" => "false",
-            "amount_cents" => "100",
-            "currency" => "EGP",
-            "merchant_order_id" => rand(110, 9000),
-            "items" => []
+        $response = $this->http->request('POST', 'ecommerce/orders', [
+            'json' => [
+                "auth_token" => $this->authToken,
+                "delivery_needed" => $order->deliveryNeeded,
+                "amount_cents" => $order->amount,
+                "currency" => $order->currency,
+                "merchant_order_id" => $order->orderId,
+                "items" => $order->items
+            ]
         ]);
+
+        $this->response = new CreateOrderResponse($response);
+        $this->orderId = $this->response->getOrderId();
+
+        return $this;
     }
 
     /**
@@ -77,27 +89,53 @@ final class Paymob
      * @param array  $data order details
      * @return Paymob
      */
-    public function checkout(array $data): Paymob
+    public function createPaymentKey(PaymentKey $paymentKey)
     {
-        $hash = $this->generateRequestHash(
-            $this->getPaymentPath($data)
-        );
-
-        $response = $this->http->request('POST', "/checkout", [
-            'form_params' => [
-                'hash' => $hash,
-                'merchantId' => $this->credentials['merchantId'],
-                'shopper_reference' => (string) $data['shopperReference'],
-                'cardToken' => $data['cardToken'],
-                'ccvToken' => $data['cvvToken'] ?? '',
-                'amount' => $data['amount'],
-                'currency' => $data['currency'],
-                'orderId' => $data['orderId'],
-                'serviceName' => 'customizableForm',
+        $response = $this->http->request('POST', "acceptance/payment_keys", [
+            'json' => [
+                "auth_token" => $this->authToken,
+                "amount_cents" => $paymentKey->amount,
+                "expiration" => $paymentKey->expiration,
+                "order_id" => $paymentKey->orderId,
+                "currency" => $paymentKey->currency,
+                "integration_id" => $paymentKey->integrationId,
+                "billing_data" => [
+                    "apartment" => "NA",
+                    "email" => "NA",
+                    "floor" => "NA",
+                    "first_name" => "NA",
+                    "street" => "NA",
+                    "building" => "NA",
+                    "phone_number" => "NA",
+                    "shipping_method" => "NA",
+                    "postal_code" => "NA",
+                    "city" => "NA",
+                    "country" => "NA",
+                    "last_name" => "NA",
+                    "state" => "NA"
+                ],
             ],
         ]);
 
-        $this->response = new CheckoutResponse((string) $response->getBody());
+        $this->response = new PaymentKeyResponse($response);
+        $this->paymentKeyToken = $this->response->getPaymentKeyToken();
+
+        return $this;
+    }
+
+    public function payWithSavedToken(string $cardToken)
+    {
+        $response = $this->http->request('POST', "acceptance/payments/pay", [
+            'json' => [
+                "source" => [
+                    "identifier" => $cardToken,
+                    "subtype" => "TOKEN"
+                ],
+                "payment_token" => $this->paymentKeyToken,
+            ]
+        ]);
+
+        $this->response = new PayWithSavedTokenResponse($response);
 
         return $this;
     }
@@ -125,11 +163,5 @@ final class Paymob
         $this->authToken = $this->response->getAuthToken();
 
         return $this;
-    }
-
-    public function dd($value)
-    {
-        highlight_string("<?php\n\$data =\n" . var_export($value, true) . ";\n?>");
-        die();
     }
 }
