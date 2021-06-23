@@ -58,6 +58,19 @@ final class Paymob
         return $this;
     }
 
+    public function createOrder(PaymentOrder $order)
+    {
+        $this->dd($order);
+        $orders = Http::withHeaders(['Content-Type' => 'application/json'])->post("https://accept.paymob.com/api/ecommerce/orders", [
+            "auth_token" => $this->authToken,
+            "delivery_needed" => "false",
+            "amount_cents" => "100",
+            "currency" => "EGP",
+            "merchant_order_id" => rand(110, 9000),
+            "items" => []
+        ]);
+    }
+
     /**
      * Check out an order
      *
@@ -89,18 +102,6 @@ final class Paymob
         return $this;
     }
 
-    /**
-     * Refund an order
-     *
-     * @param string $orderId
-     * @param mixed $merchantOrderId
-     * @param float $amounts
-     * @return Paymob
-     */
-    public function refund(): void
-    {
-        // @TODO
-    }
 
     /**
      * Response getter
