@@ -4,3 +4,4 @@ composer.lock
 .phpintel
 test.php
 index.php
+.idea/
