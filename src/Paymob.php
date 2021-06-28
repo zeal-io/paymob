@@ -142,7 +142,7 @@ final class Paymob
 	/**
 	 * Response getter
 	 *
-	 * @return CheckoutResponse|TokenizationResponse
+	 * @return AuthenticationResponse|CreateOrderResponse|PayWithSavedTokenResponse|PaymentKeyResponse
 	 */
 	public function response()
 	{
