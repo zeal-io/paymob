@@ -97,6 +97,6 @@ final class PayWithSavedTokenResponse
 	
 	public function getOrderReference()
 	{
-		return ($this->body) ?? $this->body->order ?? $this->body->order->id;
+		return ($this->body) ?? $this->body->order ?? $this->body->order;
 	}
 }
