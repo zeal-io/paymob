@@ -1,37 +1,44 @@
 {
-    "name": "zeal-io/paymob",
-    "description": "Process Payment With Paymob",
-    "keywords": [
-        "Paymob",
-        "Paymob Payment",
-        "Paymob Provider",
-        "Paymob Payment Provider",
-        "Payemnt",
-        "Paymob Gateway",
-        "package"
-    ],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Bellal Mohamed",
-            "email": "b.mohamed@myzeal.app"
-        }
-    ],
-    "type": "package",
-    "require": {
-        "php": ">=7.2.5",
-        "guzzlehttp/guzzle": "^7.3",
-        "illuminate/support": "^8.49"
-    },
-    "autoload": {
-        "psr-4": {
-            "Zeal\\Paymob\\": "src/"
-        }
-    },
-    "require-dev": {
-        "nunomaduro/phpinsights": "^2.0",
-        "squizlabs/php_codesniffer": "^3.6",
-        "symfony/var-dumper": "^5.3",
-        "filp/whoops": "^2.13"
+  "name": "zeal-io/paymob",
+  "description": "Process Payment With Paymob",
+  "keywords": [
+    "Paymob",
+    "Paymob Payment",
+    "Paymob Provider",
+    "Paymob Payment Provider",
+    "Payemnt",
+    "Paymob Gateway",
+    "package"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Bellal Mohamed",
+      "email": "b.mohamed@myzeal.app"
     }
+  ],
+  "type": "package",
+  "require": {
+    "php": ">=7.2.5",
+    "guzzlehttp/guzzle": "^7.3",
+    "illuminate/support": "^8.49"
+  },
+  "autoload": {
+    "psr-4": {
+      "Zeal\\Paymob\\": "src/"
+    }
+  },
+  "require-dev": {
+    "nunomaduro/phpinsights": "^2.0",
+    "squizlabs/php_codesniffer": "^3.6",
+    "symfony/var-dumper": "^5.3",
+    "filp/whoops": "^2.13"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Zeal\\ZealSMS\\PaymobServiceProvider"
+      ]
+    }
+  }
 }

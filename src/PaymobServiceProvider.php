@@ -23,7 +23,7 @@ class PaymobServiceProvider extends ServiceProvider
             'payment'
         );
 
-	    $this->app->bind(Paymob::class, function () {
+	    $this->app->singleton(Paymob::class, function () {
 		    return new Paymob(config('payment.paymob.api_key'));
 	    });
     }
