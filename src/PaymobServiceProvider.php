@@ -1,9 +1,8 @@
 <?php
 
-namespace Zeal\ZealSMS;
+namespace Zeal\Paymob;
 
 use Illuminate\Support\ServiceProvider;
-use Zeal\Paymob\Paymob;
 
 class PaymobServiceProvider extends ServiceProvider
 {
