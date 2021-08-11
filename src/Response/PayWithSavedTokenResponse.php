@@ -85,6 +85,12 @@ final class PayWithSavedTokenResponse
 						json_encode($this->body),
 						$this->response->getStatusCode()
 				);
+            case '404':
+                $this->failed = true;
+                throw new InvalidPaymentException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
 			default:
 				break;
 		}
