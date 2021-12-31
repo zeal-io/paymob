@@ -102,7 +102,7 @@ final class PayWithSavedTokenResponse
 
     public function getTransactionId()
     {
-        return ($this->body) ?? $this->body->id;
+        return ($this->body) ? ($this->body->id ?? $this->body) : $this->body;
     }
 
     public function getOrderReference()
