@@ -8,7 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
-final class PayWithSavedTokenResponse
+final class FetchPaymentTransactionResponse
 {
     /**
      * Hold encoded guzzle response
@@ -102,31 +102,8 @@ final class PayWithSavedTokenResponse
     private function handleResponseExceptions(): void
     {
         // Hot patch
-        if (!(property_exists($this->body, 'success') && $this->body->success === 'true')) {
+        if (!(property_exists($this->body, 'success') && $this->body->success === true)) {
             $this->failed = true;
-        }
-        switch ($this->response->getStatusCode()) {
-            case '401':
-                $this->failed = true;
-                throw new UnauthenticatedException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
-                );
-                break;
-            case '400':
-                $this->failed = true;
-                throw new InvalidPaymentException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
-                );
-            case '404':
-                $this->failed = true;
-                throw new InvalidPaymentException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-            default:
-                break;
         }
     }
 
