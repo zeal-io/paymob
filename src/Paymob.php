@@ -135,7 +135,7 @@ final class Paymob
                     ],
                     'payment_token' => $this->paymentKeyToken,
                 ],
-                'timeout' => 3
+                'timeout' => 16
             ]);
 
             $this->response = new PayWithSavedTokenResponse($response);
@@ -156,7 +156,7 @@ final class Paymob
         ]);
 
         $this->response = new FetchPaymentTransactionResponse($response);
-        dump($this->response);
+
         return $this;
     }
 
