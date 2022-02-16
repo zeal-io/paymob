@@ -9,6 +9,7 @@ use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
 use Zeal\Paymob\Response\CheckoutResponse;
+use Zeal\Paymob\Response\ConnectExceptionResponse;
 use Zeal\Paymob\Response\CreateOrderResponse;
 use Zeal\Paymob\Response\FetchPaymentTransactionResponse;
 use Zeal\Paymob\Response\PayWithSavedTokenResponse;
@@ -134,7 +135,7 @@ final class Paymob
                     ],
                     'payment_token' => $this->paymentKeyToken,
                 ],
-                'timeout' => 16
+                'timeout' => 2
             ]);
 
             $this->response = new PayWithSavedTokenResponse($response);
