@@ -30,7 +30,7 @@ final class ConnectExceptionResponse
     private $body;
 
     /**
-     * flag is response failed or not
+     * flag is transaction failed or not
      *
      * @var bool
      */

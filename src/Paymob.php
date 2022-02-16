@@ -145,7 +145,7 @@ final class Paymob
         return $this;
     }
 
-    public function fetchTransaction($uuid)
+    public function syncTransactionResponse($uuid)
     {
         $response = $this->http->request('POST', 'ecommerce/orders/transaction_inquiry', [
             'json' => [
