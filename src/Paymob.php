@@ -160,6 +160,21 @@ final class Paymob
         return $this;
     }
 
+    public function refund(array $data)
+    {
+        $response = $this->http->request('POST', 'acceptance/void_refund/refund', [
+            'json' => [
+                'auth' => $this->authToken,
+                'amount_cents' => $data['amount'],
+                'transaction_id' => $data['transaction_id'],
+            ],
+        ]);
+
+        $this->response = new FetchPaymentTransactionResponse($response);
+
+        return $this;
+    }
+
     /**
      * Response getter
      *
