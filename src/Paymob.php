@@ -164,7 +164,7 @@ final class Paymob
     {
         $response = $this->http->request('POST', 'acceptance/void_refund/refund', [
             'json' => [
-                'auth' => $this->authToken,
+                'auth_token' => $this->authToken,
                 'amount_cents' => $data['amount'],
                 'transaction_id' => $data['transaction_id'],
             ],
@@ -172,6 +172,17 @@ final class Paymob
 
         $this->response = new FetchPaymentTransactionResponse($response);
 
+        return $this;
+    }
+
+    public function voidRefund(string $transactionId)
+    {
+        $response = $this->http->request('POST', 'acceptance/void_refund/void?token='. $this->authToken , [
+            'json' => [
+                'transaction_id' => $transactionId,
+            ],
+        ]);
+        $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
 
