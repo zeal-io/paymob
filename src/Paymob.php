@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Http;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
-use Zeal\Paymob\Response\CheckoutResponse;
 use Zeal\Paymob\Response\ConnectExceptionResponse;
 use Zeal\Paymob\Response\CreateOrderResponse;
 use Zeal\Paymob\Response\FetchPaymentTransactionResponse;
@@ -31,11 +30,6 @@ final class Paymob
      */
     private $api = 'https://accept.paymob.com/api/';
 
-    /**
-     * Message Send Response
-     *
-     * @var CheckoutResponse|TokenizationResponse
-     */
     private $response;
 
     private $paymentKeyToken;
@@ -139,7 +133,6 @@ final class Paymob
             ]);
 
         $this->response = new FetchPaymentTransactionResponse($response);
-
         return $this;
     }
 
@@ -167,12 +160,6 @@ final class Paymob
         $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
-
-    /**
-     * Response getter
-     *
-     * @return AuthenticationResponse|CreateOrderResponse|PayWithSavedTokenResponse|PaymentKeyResponse
-     */
     public function response()
     {
         return $this->response;

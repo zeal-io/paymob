@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
@@ -45,16 +45,11 @@ final class FetchPaymentTransactionResponse
      */
     private $requestFailed = false;
 
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
-    public function __construct(Response $response)
+    public function __construct($response)
     {
         $this->response = $response;
 
-        $this->body = json_decode((string) $response->getBody());
+        $this->body = (object)json_decode((string)$response->getBody());
 
         $this->handleResponseExceptions();
     }
