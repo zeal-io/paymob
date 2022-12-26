@@ -1,10 +1,10 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\Client\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
@@ -45,16 +45,11 @@ final class FetchPaymentTransactionResponse
      */
     private $requestFailed = false;
 
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
     public function __construct(Response $response)
     {
         $this->response = $response;
 
-        $this->body = json_decode((string) $response->getBody());
+        $this->body = (object)json_decode((string)$response->getBody());
 
         $this->handleResponseExceptions();
     }

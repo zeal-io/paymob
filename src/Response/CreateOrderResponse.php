@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\Client\Response;
 use Zeal\Paymob\Exceptions\InvalidOrderException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
@@ -34,7 +34,7 @@ final class CreateOrderResponse
     /**
      * Parses guzzle response body
      *
-     * @param GuzzleHttp\Psr7\Response $response json string response body
+     * @param Response $response json string response body
      */
     public function __construct(Response $response)
     {

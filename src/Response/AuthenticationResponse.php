@@ -4,16 +4,11 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidAuthenticationException;
+use Illuminate\Http\Client\Response;
 
 final class AuthenticationResponse
 {
-    /**
-     * Hold encoded guzzle response
-     *
-     * @var object
-     */
     private $response;
 
     /**
@@ -30,16 +25,11 @@ final class AuthenticationResponse
      */
     private $failed = false;
 
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
     public function __construct(Response $response)
     {
         $this->response = $response;
 
-        $this->body = json_decode((string) $response->getBody());
+        $this->body = (object)json_decode((string) $response->getBody());
 
         $this->handleResponseExceptions();
     }

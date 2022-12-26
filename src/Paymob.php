@@ -1,14 +1,13 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob;
 
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
-use Zeal\Paymob\Response\CheckoutResponse;
 use Zeal\Paymob\Response\ConnectExceptionResponse;
 use Zeal\Paymob\Response\CreateOrderResponse;
 use Zeal\Paymob\Response\FetchPaymentTransactionResponse;
@@ -31,31 +30,12 @@ final class Paymob
      */
     private $api = 'https://accept.paymob.com/api/';
 
-    /**
-     * Message Send Response
-     *
-     * @var CheckoutResponse|TokenizationResponse
-     */
     private $response;
 
-    /**
-     * Guzzle Client for Iframe APIs
-     *
-     * @var Client
-     */
-    private $http;
     private $paymentKeyToken;
 
     public function __construct(string $apiKey)
     {
-        $this->http = new Client([
-            'base_uri' => $this->api,
-            'http_errors' => false,
-            'defaults' => [
-                'headers' => ['Content-Type' => 'application/json'],
-            ],
-        ]);
-
         $this->authenticate($apiKey);
 
         return $this;
@@ -68,16 +48,16 @@ final class Paymob
 
     public function createOrder(PaymentOrder $order): Paymob
     {
-        $response = $this->http->request('POST', 'ecommerce/orders', [
-            'json' => [
-                'auth_token' => $this->authToken,
-                'delivery_needed' => $order->deliveryNeeded,
-                'amount_cents' => $order->amount,
-                'currency' => $order->currency,
+
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'ecommerce/orders', [
+                'auth_token'        => $this->authToken,
+                'delivery_needed'   => $order->deliveryNeeded,
+                'amount_cents'      => $order->amount,
+                'currency'          => $order->currency,
                 'merchant_order_id' => $order->orderId,
-                'items' => $order->items,
-            ],
-        ]);
+                'items'             => $order->items,
+            ]);
 
         $this->response = new CreateOrderResponse($response);
         $this->orderId = $this->response->getOrderId();
@@ -92,31 +72,30 @@ final class Paymob
      */
     public function createPaymentKey(PaymentKey $paymentKey): Paymob
     {
-        $response = $this->http->request('POST', 'acceptance/payment_keys', [
-            'json' => [
-                'auth_token' => $this->authToken,
-                'amount_cents' => $paymentKey->amount,
-                'expiration' => $paymentKey->expiration,
-                'order_id' => $paymentKey->orderId,
-                'currency' => $paymentKey->currency,
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'acceptance/payment_keys', [
+                'auth_token'     => $this->authToken,
+                'amount_cents'   => $paymentKey->amount,
+                'expiration'     => $paymentKey->expiration,
+                'order_id'       => $paymentKey->orderId,
+                'currency'       => $paymentKey->currency,
                 'integration_id' => $paymentKey->integrationId,
-                'billing_data' => [
-                    'apartment' => 'NA',
-                    'email' => 'NA',
-                    'floor' => 'NA',
-                    'first_name' => 'NA',
-                    'street' => 'NA',
-                    'building' => 'NA',
-                    'phone_number' => 'NA',
+                'billing_data'   => [
+                    'apartment'       => 'NA',
+                    'email'           => 'NA',
+                    'floor'           => 'NA',
+                    'first_name'      => 'NA',
+                    'street'          => 'NA',
+                    'building'        => 'NA',
+                    'phone_number'    => 'NA',
                     'shipping_method' => 'NA',
-                    'postal_code' => 'NA',
-                    'city' => 'NA',
-                    'country' => 'NA',
-                    'last_name' => 'NA',
-                    'state' => 'NA',
+                    'postal_code'     => 'NA',
+                    'city'            => 'NA',
+                    'country'         => 'NA',
+                    'last_name'       => 'NA',
+                    'state'           => 'NA',
                 ],
-            ],
-        ]);
+            ]);
 
         $this->response = new PaymentKeyResponse($response);
         $this->paymentKeyToken = $this->response->getPaymentKeyToken();
@@ -127,19 +106,18 @@ final class Paymob
     public function payWithSavedToken(string $cardToken): Paymob
     {
         try {
-            $response = $this->http->request('POST', 'acceptance/payments/pay', [
-                'json' => [
-                    'source' => [
+            $response = Http::timeout(16)
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post($this->api . 'acceptance/payments/pay', [
+                    'source'        => [
                         'identifier' => $cardToken,
-                        'subtype' => 'TOKEN',
+                        'subtype'    => 'TOKEN',
                     ],
                     'payment_token' => $this->paymentKeyToken,
-                ],
-                'timeout' => 16
-            ]);
+                ]);
 
             $this->response = new PayWithSavedTokenResponse($response);
-        } catch(\GuzzleHttp\Exception\GuzzleException $e) {
+        } catch (\Exception $e) {
             $this->response = new ConnectExceptionResponse($e);
         }
 
@@ -148,27 +126,24 @@ final class Paymob
 
     public function syncTransactionResponse($uuid)
     {
-        $response = $this->http->request('POST', 'ecommerce/orders/transaction_inquiry', [
-            'json' => [
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'ecommerce/orders/transaction_inquiry', [
                 'merchant_order_id' => $uuid,
-                'auth_token' => $this->authToken,
-            ],
-        ]);
+                'auth_token'        => $this->authToken,
+            ]);
 
         $this->response = new FetchPaymentTransactionResponse($response);
-
         return $this;
     }
 
     public function refund(array $data)
     {
-        $response = $this->http->request('POST', 'acceptance/void_refund/refund', [
-            'json' => [
-                'auth_token' => $this->authToken,
-                'amount_cents' => $data['amount'],
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'acceptance/void_refund/refund', [
+                'auth_token'     => $this->authToken,
+                'amount_cents'   => $data['amount'],
                 'transaction_id' => $data['transaction_id'],
-            ],
-        ]);
+            ]);
 
         $this->response = new FetchPaymentTransactionResponse($response);
 
@@ -177,36 +152,25 @@ final class Paymob
 
     public function voidRefund(string $transactionId)
     {
-        $response = $this->http->request('POST', 'acceptance/void_refund/void?token='. $this->authToken , [
-            'json' => [
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'acceptance/void_refund/void?token=' . $this->authToken, [
                 'transaction_id' => $transactionId,
-            ],
-        ]);
+            ]);
+
         $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
-
-    /**
-     * Response getter
-     *
-     * @return AuthenticationResponse|CreateOrderResponse|PayWithSavedTokenResponse|PaymentKeyResponse
-     */
     public function response()
     {
         return $this->response;
     }
 
-    private function authenticate(string $apiKey): Paymob
+    private function authenticate(string $apiKey): void
     {
-        $response = $this->http->request('POST', 'auth/tokens', [
-            'json' => [
-                'api_key' => $apiKey,
-            ],
-        ]);
+        $response = Http::withHeaders(['Content-Type' => 'application/json',])
+            ->post($this->api . 'auth/tokens', ['api_key' => $apiKey]);
 
         $this->response = new AuthenticationResponse($response);
         $this->authToken = $this->response->getAuthToken();
-
-        return $this;
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\Client\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentKeyException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 

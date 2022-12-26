@@ -1,20 +1,15 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
+use Illuminate\Http\Client\Response;
 
 final class PayWithSavedTokenResponse
 {
-    /**
-     * Hold encoded guzzle response
-     *
-     * @var object
-     */
     private $response;
 
     /**
@@ -45,11 +40,6 @@ final class PayWithSavedTokenResponse
      */
     private $requestFailed = false;
 
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
     public function __construct(Response $response)
     {
         $this->response = $response;
@@ -109,15 +99,15 @@ final class PayWithSavedTokenResponse
             case '401':
                 $this->failed = true;
                 throw new UnauthenticatedException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
                 );
                 break;
             case '400':
                 $this->failed = true;
                 throw new InvalidPaymentException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
                 );
             case '404':
                 $this->failed = true;
