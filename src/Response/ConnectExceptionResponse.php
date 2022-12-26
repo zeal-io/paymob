@@ -1,10 +1,10 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\Client\Response;
 
 final class ConnectExceptionResponse
 {
@@ -53,7 +53,7 @@ final class ConnectExceptionResponse
     /**
      * Parses guzzle response body
      *
-     * @param Response $response json string response body
+     * @param \Exception 
      */
     public function __construct(\Exception $exception)
     {

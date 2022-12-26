@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\Client\Response;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
 
@@ -45,7 +45,7 @@ final class FetchPaymentTransactionResponse
      */
     private $requestFailed = false;
 
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 

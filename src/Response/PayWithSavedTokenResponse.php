@@ -1,11 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Exceptions\UnauthenticatedException;
+use Illuminate\Http\Client\Response;
 
 final class PayWithSavedTokenResponse
 {
@@ -39,7 +40,7 @@ final class PayWithSavedTokenResponse
      */
     private $requestFailed = false;
 
-    public function __construct($response)
+    public function __construct(Response $response)
     {
         $this->response = $response;
 
@@ -98,15 +99,15 @@ final class PayWithSavedTokenResponse
             case '401':
                 $this->failed = true;
                 throw new UnauthenticatedException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
                 );
                 break;
             case '400':
                 $this->failed = true;
                 throw new InvalidPaymentException(
-                        json_encode($this->body),
-                        $this->response->getStatusCode()
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
                 );
             case '404':
                 $this->failed = true;
