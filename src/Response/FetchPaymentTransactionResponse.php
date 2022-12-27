@@ -96,6 +96,10 @@ final class FetchPaymentTransactionResponse
 
     private function handleResponseExceptions(): void
     {
+        if (!$this->getStatusCode()) {
+            $this->failed = true;
+            return;
+        }
         // Hot patch
         if (!(property_exists($this->body, 'success') && $this->body->success === true)) {
             $this->failed = true;
@@ -110,5 +114,11 @@ final class FetchPaymentTransactionResponse
     public function getOrderReference()
     {
         return ($this->body) ?? $this->body->order ?? $this->body->order;
+    }
+
+    public function isStatusSuccess(): bool
+    {
+        $status = $this->response->getStatusCode();
+        return $status >= 200 && $status < 300;
     }
 }
