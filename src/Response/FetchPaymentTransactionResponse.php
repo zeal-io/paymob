@@ -96,7 +96,7 @@ final class FetchPaymentTransactionResponse
 
     private function handleResponseExceptions(): void
     {
-        if (!$this->getStatusCode()) {
+        if (!$this->isStatusSuccess()) {
             $this->failed = true;
             return;
         }
