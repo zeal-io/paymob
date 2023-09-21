@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob\Response;
-
-use Illuminate\Http\Client\Response;
+namespace Zeal\Paymob\Core\Responses;
 
 final class ConnectExceptionResponse
 {
@@ -53,12 +51,13 @@ final class ConnectExceptionResponse
     /**
      * Parses guzzle response body
      *
-     * @param \Exception 
+     * @param \Exception
      */
     public function __construct(\Exception $exception)
     {
         $this->exception = $exception;
-        $this->context = $this->exception->getHandlerContext();
+
+        $this->context = method_exists($this->exception, 'getHandlerContext') ? $this->exception->getHandlerContext() : [];
 
         $this->handleException();
     }

@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob\Response;
+namespace Zeal\Paymob\Core\Responses;
 
-use Zeal\Paymob\Exceptions\InvalidPaymentException;
-use Zeal\Paymob\Exceptions\UnauthenticatedException;
 use Illuminate\Http\Client\Response;
 
-final class PayWithSavedTokenResponse
+final class FetchPaymentTransactionResponse
 {
+    /**
+     * Hold encoded guzzle response
+     *
+     * @var object
+     */
     private $response;
 
     /**
@@ -44,7 +47,7 @@ final class PayWithSavedTokenResponse
     {
         $this->response = $response;
 
-        $this->body = json_decode((string) $response->getBody());
+        $this->body = (object)json_decode((string)$response->getBody());
 
         $this->handleResponseExceptions();
     }
@@ -91,32 +94,13 @@ final class PayWithSavedTokenResponse
 
     private function handleResponseExceptions(): void
     {
-        // Hot patch
-        if (!(property_exists($this->body, 'success') && $this->body->success === 'true')) {
+        if (!$this->isStatusSuccess()) {
             $this->failed = true;
+            return;
         }
-        switch ($this->response->getStatusCode()) {
-            case '401':
-                $this->failed = true;
-                throw new UnauthenticatedException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-                break;
-            case '400':
-                $this->failed = true;
-                throw new InvalidPaymentException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-            case '404':
-                $this->failed = true;
-                throw new InvalidPaymentException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-            default:
-                break;
+        // Hot patch
+        if (!(property_exists($this->body, 'success') && $this->body->success === true)) {
+            $this->failed = true;
         }
     }
 
@@ -128,5 +112,11 @@ final class PayWithSavedTokenResponse
     public function getOrderReference()
     {
         return ($this->body) ?? $this->body->order ?? $this->body->order;
+    }
+
+    public function isStatusSuccess(): bool
+    {
+        $status = $this->response->getStatusCode();
+        return $status >= 200 && $status < 300;
     }
 }

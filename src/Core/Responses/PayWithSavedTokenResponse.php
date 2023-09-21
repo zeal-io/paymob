@@ -2,19 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob\Response;
+namespace Zeal\Paymob\Core\Responses;
 
 use Illuminate\Http\Client\Response;
-use Zeal\Paymob\Exceptions\InvalidPaymentException;
-use Zeal\Paymob\Exceptions\UnauthenticatedException;
+use Zeal\Paymob\Core\Exceptions\InvalidPaymentException;
+use Zeal\Paymob\Core\Exceptions\UnauthenticatedException;
 
-final class FetchPaymentTransactionResponse
+final class PayWithSavedTokenResponse
 {
-    /**
-     * Hold encoded guzzle response
-     *
-     * @var object
-     */
     private $response;
 
     /**
@@ -49,7 +44,7 @@ final class FetchPaymentTransactionResponse
     {
         $this->response = $response;
 
-        $this->body = (object)json_decode((string)$response->getBody());
+        $this->body = json_decode((string) $response->getBody());
 
         $this->handleResponseExceptions();
     }
@@ -96,13 +91,32 @@ final class FetchPaymentTransactionResponse
 
     private function handleResponseExceptions(): void
     {
-        if (!$this->isStatusSuccess()) {
-            $this->failed = true;
-            return;
-        }
         // Hot patch
-        if (!(property_exists($this->body, 'success') && $this->body->success === true)) {
+        if (!(property_exists($this->body, 'success') && $this->body->success === 'true')) {
             $this->failed = true;
+        }
+        switch ($this->response->getStatusCode()) {
+            case '401':
+                $this->failed = true;
+                throw new UnauthenticatedException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
+                break;
+            case '400':
+                $this->failed = true;
+                throw new InvalidPaymentException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
+            case '404':
+                $this->failed = true;
+                throw new InvalidPaymentException(
+                    json_encode($this->body),
+                    $this->response->getStatusCode()
+                );
+            default:
+                break;
         }
     }
 
@@ -114,11 +128,5 @@ final class FetchPaymentTransactionResponse
     public function getOrderReference()
     {
         return ($this->body) ?? $this->body->order ?? $this->body->order;
-    }
-
-    public function isStatusSuccess(): bool
-    {
-        $status = $this->response->getStatusCode();
-        return $status >= 200 && $status < 300;
     }
 }

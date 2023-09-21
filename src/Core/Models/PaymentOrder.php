@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob\Models;
+namespace Zeal\Paymob\Core\Models;
 
 final class PaymentOrder
 {

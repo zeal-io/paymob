@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob\Response;
+namespace Zeal\Paymob\Core\Responses;
 
-use Zeal\Paymob\Exceptions\InvalidAuthenticationException;
 use Illuminate\Http\Client\Response;
+use Zeal\Paymob\Core\Exceptions\InvalidAuthenticationException;
 
 final class AuthenticationResponse
 {

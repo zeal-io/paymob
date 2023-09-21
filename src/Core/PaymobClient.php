@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Zeal\Paymob;
+namespace Zeal\Paymob\Core;
 
 use Illuminate\Support\Facades\Http;
-use Zeal\Paymob\Models\PaymentKey;
-use Zeal\Paymob\Models\PaymentOrder;
-use Zeal\Paymob\Response\AuthenticationResponse;
-use Zeal\Paymob\Response\ConnectExceptionResponse;
-use Zeal\Paymob\Response\CreateOrderResponse;
-use Zeal\Paymob\Response\FetchPaymentTransactionResponse;
-use Zeal\Paymob\Response\PayWithSavedTokenResponse;
-use Zeal\Paymob\Response\PaymentKeyResponse;
+use Zeal\Paymob\Core\Models\PaymentKey;
+use Zeal\Paymob\Core\Models\PaymentOrder;
+use Zeal\Paymob\Core\Responses\AuthenticationResponse;
+use Zeal\Paymob\Core\Responses\ConnectExceptionResponse;
+use Zeal\Paymob\Core\Responses\CreateOrderResponse;
+use Zeal\Paymob\Core\Responses\FetchPaymentTransactionResponse;
+use Zeal\Paymob\Core\Responses\PaymentKeyResponse;
+use Zeal\Paymob\Core\Responses\PayWithSavedTokenResponse;
 
-final class Paymob
+final class PaymobClient
 {
     /**
      * Order id returned from paymob
@@ -46,7 +46,7 @@ final class Paymob
         return $this->paymentKeyToken;
     }
 
-    public function createOrder(PaymentOrder $order): Paymob
+    public function createOrder(PaymentOrder $order): PaymobClient
     {
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
@@ -70,7 +70,7 @@ final class Paymob
      *
      * @param array $data order details
      */
-    public function createPaymentKey(PaymentKey $paymentKey): Paymob
+    public function createPaymentKey(PaymentKey $paymentKey): PaymobClient
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'acceptance/payment_keys', [
@@ -103,7 +103,7 @@ final class Paymob
         return $this;
     }
 
-    public function payWithSavedToken(string $cardToken): Paymob
+    public function payWithSavedToken(string $cardToken): PaymobClient
     {
         try {
             $response = Http::timeout(16)
