@@ -1,10 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Zeal\Paymob\Core;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Zeal\PaymentFramework\RequestBuilders\BaseRequestBuilder;
+use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\Paymob\Core\Models\IntegrationKey;
 use Zeal\Paymob\Core\Models\PaymentKey;
 use Zeal\Paymob\Core\Models\PaymentOrder;
 use Zeal\Paymob\Core\Responses\AuthenticationResponse;
@@ -14,52 +16,48 @@ use Zeal\Paymob\Core\Responses\FetchPaymentTransactionResponse;
 use Zeal\Paymob\Core\Responses\PaymentKeyResponse;
 use Zeal\Paymob\Core\Responses\PayWithSavedTokenResponse;
 
-final class PaymobClient
+class PaymobClient
 {
-    /**
-     * Order id returned from paymob
-     *
-     * @var int
-     */
-    public $orderId;
+    const BASE_URL = 'https://accept.paymob.com/api/';
 
-    /**
-     * Base API Endpont
-     *
-     * @var string
-     */
-    private $api = 'https://accept.paymob.com/api/';
+    public PendingRequest $client;
+    private BaseRequestBuilder $requestBuilder;
+    private IntegrationKey $integrationKey;
+    private BasePaymentResponse $response;
+    private string $token;
 
-    private $response;
-
-    private $paymentKeyToken;
-
-    public function __construct(string $apiKey)
+    public function __construct(IntegrationKey $integrationKey)
     {
-        $this->authenticate($apiKey);
+        $this->client = new PendingRequest();
+        $this->integrationKey = $integrationKey;
+
+            $this
+                ->setHeaders()
+                ->authenticate();
+    }
+
+    private function setHeaders(): self
+    {
+        $this->client->withHeaders([
+            'Content-Type' => 'application/json'
+        ]);
 
         return $this;
     }
-
-    public function getPaymentKeyToken()
-    {
-        return $this->paymentKeyToken;
-    }
-
     public function createOrder(PaymentOrder $order): PaymobClient
     {
-
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'ecommerce/orders', [
-                'auth_token'        => $this->authToken,
-                'delivery_needed'   => $order->deliveryNeeded,
-                'amount_cents'      => $order->amount,
-                'currency'          => $order->currency,
-                'merchant_order_id' => $order->orderId,
-                'items'             => $order->items,
-            ]);
+//[
+//                'auth_token'        => $this->authToken,
+//                'delivery_needed'   => $order->deliveryNeeded,
+//                'amount_cents'      => $order->amount,
+//                'currency'          => $order->currency,
+//                'merchant_order_id' => $order->orderId,
+//                'items'             => $order->items,
+//            ]
+        $response = $this->client->post(self::BASE_URL . 'ecommerce/orders', $this->requestBuilder->build());
 
         $this->response = new CreateOrderResponse($response);
+
         $this->orderId = $this->response->getOrderId();
 
         return $this;
@@ -160,17 +158,18 @@ final class PaymobClient
         $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
-    public function response()
-    {
-        return $this->response;
-    }
 
-    private function authenticate(string $apiKey): void
+    private function authenticate(): self
     {
-        $response = Http::withHeaders(['Content-Type' => 'application/json',])
-            ->post($this->api . 'auth/tokens', ['api_key' => $apiKey]);
+        $response = $this->client
+            ->post(self::BASE_URL . 'auth/tokens', [
+                'api_key' => $this->integrationKey->api_key,
+            ]);
 
-        $this->response = new AuthenticationResponse($response);
-        $this->authToken = $this->response->getAuthToken();
+        $this->response = AuthenticationResponse::make($response);
+
+        $this->token = $this->response->getToken();
+
+        return $this;
     }
 }
