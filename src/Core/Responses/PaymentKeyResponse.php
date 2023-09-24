@@ -1,92 +1,45 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Zeal\Paymob\Core\Responses;
 
 use Illuminate\Http\Client\Response;
+use Zeal\PaymentFramework\Enums\ResponseStatusEnum;
+use Zeal\PaymentFramework\Responses\BasePaymentResponse;
 use Zeal\Paymob\Core\Exceptions\InvalidPaymentKeyException;
 use Zeal\Paymob\Core\Exceptions\UnauthenticatedException;
 
-final class PaymentKeyResponse
+class PaymentKeyResponse extends BasePaymobResponse
 {
-    /**
-     * Hold encoded guzzle response
-     *
-     * @var object
-     */
-    private $response;
+    private string $paymentKeyToken;
 
-    /**
-     * Holds guzzle response decoded body
-     *
-     * @var object
-     */
-    private $body;
-
-    /**
-     * flag is response failed or not
-     *
-     * @var bool
-     */
-    private $failed = false;
-
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
-    public function __construct(Response $response)
+    public function toResponseObject(): BasePaymentResponse
     {
-        $this->response = $response;
-
-        $this->body = json_decode((string) $response->getBody());
-
-        $this->handleResponseExceptions();
+        return $this->setPaymentKeyToken($this->responseBody['token']);
     }
 
-    /**
-     * Getter for failed flag
-     */
-    public function failed(): bool
+    public function toArray(): array
     {
-        return $this->failed;
+        return [
+            'token' => $this->paymentKeyToken,
+        ];
     }
 
-    /**
-     * Returns response status code
-     */
-    public function getStatusCode(): int
+    public function setStatus(): BasePaymentResponse
     {
-        return $this->response->getStatusCode();
+        $this->status = $this->hasErrors ? ResponseStatusEnum::SUCCESS : ResponseStatusEnum::FAILED;
+
+        return $this;
     }
 
-    /**
-     * Return card token
-     */
+    private function setPaymentKeyToken(string $token): static
+    {
+        $this->paymentKeyToken = $token;
+
+        return $this;
+    }
+
     public function getPaymentKeyToken(): string
     {
-        return $this->body->token;
-    }
-
-    private function handleResponseExceptions(): void
-    {
-        switch ($this->response->getStatusCode()) {
-            case '400':
-                $this->failed = true;
-                throw new InvalidPaymentKeyException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-                break;
-            case '401':
-                $this->failed = true;
-                throw new UnauthenticatedException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-            default:
-                break;
-        }
+        return $this->paymentKeyToken;
     }
 }

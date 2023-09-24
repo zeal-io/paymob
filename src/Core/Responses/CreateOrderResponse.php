@@ -4,96 +4,41 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Core\Responses;
 
-use Illuminate\Http\Client\Response;
-use Zeal\Paymob\Core\Exceptions\InvalidOrderException;
-use Zeal\Paymob\Core\Exceptions\UnauthenticatedException;
+use Zeal\PaymentFramework\Enums\ResponseStatusEnum;
+use Zeal\PaymentFramework\Responses\BasePaymentResponse;
 
-final class CreateOrderResponse
+class CreateOrderResponse extends BasePaymobResponse
 {
-    /**
-     * Hold encoded guzzle response
-     *
-     * @var object
-     */
-    private $response;
+    private string $id;
 
-    /**
-     * Holds guzzle response decoded body
-     *
-     * @var object
-     */
-    private $body;
-
-    /**
-     * flag is response failed or not
-     *
-     * @var bool
-     */
-    private $failed = false;
-
-    /**
-     * Parses guzzle response body
-     *
-     * @param Response $response json string response body
-     */
-    public function __construct(Response $response)
+    public function toResponseObject(): BasePaymentResponse
     {
-        $this->response = $response;
-
-        $this->body = json_decode((string) $response->getBody());
-
-        $this->handleResponseExceptions();
+        return $this->setOrderId($this->responseBody['id']);
     }
 
-    /**
-     * Getter for failed flag
-     */
-    public function failed(): bool
+    public function toArray(): array
     {
-        return $this->failed;
+        return [
+            'id' => $this->id,
+        ];
     }
 
-    /**
-     * Returns response status code
-     */
-    public function getStatusCode(): string
+    public function setStatus(): BasePaymentResponse
     {
-        return $this->response->getStatusCode();
+        $this->status = $this->hasErrors ? ResponseStatusEnum::SUCCESS : ResponseStatusEnum::FAILED;
+
+        return $this;
     }
 
-    /**
-     * Return card token
-     */
-    public function getOrderId(): string
+    private function setOrderId(string $id): self
     {
-        return (string) $this->body->id;
+        $this->id = $id;
+
+        return $this;
     }
 
-    private function handleResponseExceptions(): void
+    public function getId(): string
     {
-        switch ($this->response->getStatusCode()) {
-            case '422':
-                $this->failed = true;
-                throw new InvalidOrderException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-                break;
-            case '400':
-                $this->failed = true;
-                throw new InvalidOrderException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-                break;
-            case '401':
-                $this->failed = true;
-                throw new UnauthenticatedException(
-                    json_encode($this->body),
-                    $this->response->getStatusCode()
-                );
-            default:
-                break;
-        }
+        return $this->id;
     }
 }

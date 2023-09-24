@@ -16,4 +16,26 @@ abstract class BasePaymobResponse extends BasePaymentResponse
 
         return $this;
     }
+
+    public function validateErrors(): static
+    {
+        if ($this->response->status() === 422 || $this->response->status() === 400) {
+            $this->hasErrors = true;
+            $this->errorResponse
+                ->setResponse($this->response)
+                ->setResponseMessage('Invalid Payment Key');
+
+            return $this;
+        }
+        if ($this->response->status() === 401) {
+            $this->hasErrors = true;
+            $this->errorResponse
+                ->setResponse($this->response)
+                ->setResponseMessage('UnAuthentication');
+
+            return $this;
+        }
+
+        return $this;
+    }
 }

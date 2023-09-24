@@ -4,36 +4,38 @@ namespace Zeal\Paymob\Core;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
-use Zeal\PaymentFramework\RequestBuilders\BaseRequestBuilder;
 use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\Paymob\Core\DTOs\GatewaySpecificationDTO;
 use Zeal\Paymob\Core\Models\IntegrationKey;
-use Zeal\Paymob\Core\Models\PaymentKey;
-use Zeal\Paymob\Core\Models\PaymentOrder;
+use Zeal\Paymob\Core\RequestBuilders\CreateOrderRequestBuilder;
+use Zeal\Paymob\Core\RequestBuilders\FetchTransactionRequestBuilder;
+use Zeal\Paymob\Core\RequestBuilders\PaymentKeyRequestBuilder;
+use Zeal\Paymob\Core\RequestBuilders\PayWithSavedTokenRequestBuilder;
+use Zeal\Paymob\Core\RequestBuilders\RefundRequestBuilder;
+use Zeal\Paymob\Core\RequestBuilders\VoidRequestBuilder;
 use Zeal\Paymob\Core\Responses\AuthenticationResponse;
-use Zeal\Paymob\Core\Responses\ConnectExceptionResponse;
 use Zeal\Paymob\Core\Responses\CreateOrderResponse;
-use Zeal\Paymob\Core\Responses\FetchPaymentTransactionResponse;
 use Zeal\Paymob\Core\Responses\PaymentKeyResponse;
-use Zeal\Paymob\Core\Responses\PayWithSavedTokenResponse;
+use Zeal\Paymob\Core\Responses\TransactionResponse;
 
 class PaymobClient
 {
     const BASE_URL = 'https://accept.paymob.com/api/';
+    const PAY_WITH_SAVED_TOKEN_TIMEOUT = 14;
 
     public PendingRequest $client;
-    private BaseRequestBuilder $requestBuilder;
     private IntegrationKey $integrationKey;
     private BasePaymentResponse $response;
-    private string $token;
+    private GatewaySpecificationDTO $specificationDto;
 
     public function __construct(IntegrationKey $integrationKey)
     {
         $this->client = new PendingRequest();
         $this->integrationKey = $integrationKey;
-
-            $this
-                ->setHeaders()
-                ->authenticate();
+        $this->specificationDto = new GatewaySpecificationDTO();
+        $this
+            ->setHeaders()
+            ->authenticate();
     }
 
     private function setHeaders(): self
@@ -44,131 +46,79 @@ class PaymobClient
 
         return $this;
     }
-    public function createOrder(PaymentOrder $order): PaymobClient
+
+    public function createPaymentOrder(CreateOrderRequestBuilder $requestBuilder): PaymobClient
     {
-//[
-//                'auth_token'        => $this->authToken,
-//                'delivery_needed'   => $order->deliveryNeeded,
-//                'amount_cents'      => $order->amount,
-//                'currency'          => $order->currency,
-//                'merchant_order_id' => $order->orderId,
-//                'items'             => $order->items,
-//            ]
-        $response = $this->client->post(self::BASE_URL . 'ecommerce/orders', $this->requestBuilder->build());
+        $response = $this->client->post(self::BASE_URL . 'ecommerce/orders', $requestBuilder->build());
 
-        $this->response = new CreateOrderResponse($response);
+        $this->response = CreateOrderResponse::make($response);
 
-        $this->orderId = $this->response->getOrderId();
+        $this->specificationDto->orderId = $this->response->getId();
 
         return $this;
     }
 
-    /**
-     * Check out an order
-     *
-     * @param array $data order details
-     */
-    public function createPaymentKey(PaymentKey $paymentKey): PaymobClient
+    public function createPaymentKey(PaymentKeyRequestBuilder $requestBuilder): PaymobClient
+    {
+        $response = $this->client->post(self::BASE_URL . 'acceptance/payment_keys', $requestBuilder->build());
+
+        $this->response = PaymentKeyResponse::make($response);
+
+        $this->specificationDto->paymentKeyToken = $this->response->getPaymentKeyToken();
+
+        return $this;
+    }
+
+    public function payWithSavedToken(PayWithSavedTokenRequestBuilder $requestBuilder): PaymobClient
+    {
+        $response = $this->client
+            ->timeout(self::PAY_WITH_SAVED_TOKEN_TIMEOUT)
+            ->post(self::BASE_URL . 'acceptance/payments/pay', $requestBuilder->build());
+
+        $this->response = TransactionResponse::make($response);
+
+        return $this;
+    }
+
+    public function fetchTransactionByMerchantOrderId(FetchTransactionRequestBuilder $requestBuilder): self
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/payment_keys', [
-                'auth_token'     => $this->authToken,
-                'amount_cents'   => $paymentKey->amount,
-                'expiration'     => $paymentKey->expiration,
-                'order_id'       => $paymentKey->orderId,
-                'currency'       => $paymentKey->currency,
-                'integration_id' => $paymentKey->integrationId,
-                'billing_data'   => [
-                    'apartment'       => 'NA',
-                    'email'           => 'NA',
-                    'floor'           => 'NA',
-                    'first_name'      => 'NA',
-                    'street'          => 'NA',
-                    'building'        => 'NA',
-                    'phone_number'    => 'NA',
-                    'shipping_method' => 'NA',
-                    'postal_code'     => 'NA',
-                    'city'            => 'NA',
-                    'country'         => 'NA',
-                    'last_name'       => 'NA',
-                    'state'           => 'NA',
-                ],
-            ]);
+            ->post(self::BASE_URL . 'ecommerce/orders/transaction_inquiry', $requestBuilder->build());
 
-        $this->response = new PaymentKeyResponse($response);
-        $this->paymentKeyToken = $this->response->getPaymentKeyToken();
+        $this->response = TransactionResponse::make($response);
 
         return $this;
     }
 
-    public function payWithSavedToken(string $cardToken): PaymobClient
+    public function refund(RefundRequestBuilder $requestBuilder): self
     {
-        try {
-            $response = Http::timeout(16)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($this->api . 'acceptance/payments/pay', [
-                    'source'        => [
-                        'identifier' => $cardToken,
-                        'subtype'    => 'TOKEN',
-                    ],
-                    'payment_token' => $this->paymentKeyToken,
-                ]);
+        $response = $this->client
+            ->post(self::BASE_URL . 'acceptance/void_refund/refund', $requestBuilder->build());
 
-            $this->response = new PayWithSavedTokenResponse($response);
-        } catch (\Exception $e) {
-            $this->response = new ConnectExceptionResponse($e);
-        }
+        $this->response = TransactionResponse::make($response);
 
         return $this;
     }
 
-    public function syncTransactionResponse($uuid)
+    public function voidRefund(VoidRequestBuilder $requestBuilder): self
     {
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'ecommerce/orders/transaction_inquiry', [
-                'merchant_order_id' => $uuid,
-                'auth_token'        => $this->authToken,
-            ]);
+        $response = $this->client
+            ->post(self::BASE_URL . 'acceptance/void_refund/void', $requestBuilder->build());
 
-        $this->response = new FetchPaymentTransactionResponse($response);
-        return $this;
-    }
+        $this->response = new TransactionResponse($response);
 
-    public function refund(array $data)
-    {
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/void_refund/refund', [
-                'auth_token'     => $this->authToken,
-                'amount_cents'   => $data['amount'],
-                'transaction_id' => $data['transaction_id'],
-            ]);
-
-        $this->response = new FetchPaymentTransactionResponse($response);
-
-        return $this;
-    }
-
-    public function voidRefund(string $transactionId)
-    {
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/void_refund/void?token=' . $this->authToken, [
-                'transaction_id' => $transactionId,
-            ]);
-
-        $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
 
     private function authenticate(): self
     {
-        $response = $this->client
-            ->post(self::BASE_URL . 'auth/tokens', [
-                'api_key' => $this->integrationKey->api_key,
-            ]);
+        $response = $this->client->post(self::BASE_URL . 'auth/tokens', [
+            'api_key' => $this->integrationKey->api_key,
+        ]);
 
         $this->response = AuthenticationResponse::make($response);
 
-        $this->token = $this->response->getToken();
+        $this->specificationDto->token = $this->response->getToken();
 
         return $this;
     }
