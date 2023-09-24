@@ -12,7 +12,6 @@ class GatewaySpecificationDTO implements GatewaySpecificationInterface
     public function __construct(
         public readonly string $merchantOrderId,
         public readonly string $integrationId
-    )
-    {
+    ) {
     }
 }

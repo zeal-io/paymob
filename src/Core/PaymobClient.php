@@ -2,9 +2,9 @@
 
 namespace Zeal\Paymob\Core;
 
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
-use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\PaymentFramework\Client\GatewayClient;
+use Zeal\PaymentFramework\Interfaces\IntegrationKeyInterface;
 use Zeal\Paymob\Core\DTOs\GatewaySpecificationDTO;
 use Zeal\Paymob\Core\Models\IntegrationKey;
 use Zeal\Paymob\Core\RequestBuilders\CreateOrderRequestBuilder;
@@ -18,27 +18,14 @@ use Zeal\Paymob\Core\Responses\CreateOrderResponse;
 use Zeal\Paymob\Core\Responses\PaymentKeyResponse;
 use Zeal\Paymob\Core\Responses\TransactionResponse;
 
-class PaymobClient
+class PaymobClient extends GatewayClient
 {
     const BASE_URL = 'https://accept.paymob.com/api/';
     const PAY_WITH_SAVED_TOKEN_TIMEOUT = 14;
-
-    public PendingRequest $client;
     private IntegrationKey $integrationKey;
-    private BasePaymentResponse $response;
     private GatewaySpecificationDTO $specificationDto;
 
-    public function __construct(IntegrationKey $integrationKey)
-    {
-        $this->client = new PendingRequest();
-        $this->integrationKey = $integrationKey;
-        $this->specificationDto = new GatewaySpecificationDTO();
-        $this
-            ->setHeaders()
-            ->authenticate();
-    }
-
-    private function setHeaders(): self
+    protected function setHeaders(): self
     {
         $this->client->withHeaders([
             'Content-Type' => 'application/json'
@@ -110,7 +97,7 @@ class PaymobClient
         return $this;
     }
 
-    private function authenticate(): self
+    public function authenticate(): self
     {
         $response = $this->client->post(self::BASE_URL . 'auth/tokens', [
             'api_key' => $this->integrationKey->api_key,
@@ -120,6 +107,18 @@ class PaymobClient
 
         $this->specificationDto->token = $this->response->getToken();
 
+        return $this;
+    }
+
+    public function setGatewaySpecification(GatewaySpecificationDTO $specificationDto): PaymobClient
+    {
+        $this->specificationDto = $specificationDto;
+        return $this;
+    }
+
+    public function setIntegrationKey(IntegrationKeyInterface $integrationKey): self
+    {
+        $this->integrationKey = $integrationKey;
         return $this;
     }
 }
