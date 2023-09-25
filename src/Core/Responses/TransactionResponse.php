@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Zeal\Paymob\Core\Responses;
 
 use Illuminate\Http\Client\Response;
-use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\PaymentFramework\Responses\PaymentResponse;
 use Zeal\Paymob\Core\Exceptions\InvalidPaymentException;
 use Zeal\Paymob\Core\Exceptions\UnauthenticatedException;
 
-class TransactionResponse extends BasePaymobResponse
+class TransactionResponse extends PaymobResponse
 {
     private string $transactionId;
     private string $orderReference;
 
-    public function toResponseObject(): BasePaymentResponse
+    public function toResponseObject(): PaymentResponse
     {
         return $this
             ->setTransactionId()

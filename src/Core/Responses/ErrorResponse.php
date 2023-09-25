@@ -3,9 +3,8 @@
 namespace Zeal\Paymob\Core\Responses;
 
 use Illuminate\Http\Resources\MissingValue;
-use Zeal\PaymentFramework\Responses\BaseErrorResponse;
 
-class ErrorResponse extends BaseErrorResponse
+class ErrorResponse extends \Zeal\PaymentFramework\Responses\ErrorResponse
 {
 
     public function toResponseObject(): self

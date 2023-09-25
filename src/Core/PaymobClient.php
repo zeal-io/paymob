@@ -2,9 +2,7 @@
 
 namespace Zeal\Paymob\Core;
 
-use Illuminate\Support\Facades\Http;
 use Zeal\PaymentFramework\Client\GatewayClient;
-use Zeal\PaymentFramework\Interfaces\IntegrationKeyInterface;
 use Zeal\Paymob\Core\DTOs\GatewaySpecificationDTO;
 use Zeal\Paymob\Core\Models\IntegrationKey;
 use Zeal\Paymob\Core\RequestBuilders\CreateOrderRequestBuilder;
@@ -24,8 +22,13 @@ class PaymobClient extends GatewayClient
     const PAY_WITH_SAVED_TOKEN_TIMEOUT = 14;
     private IntegrationKey $integrationKey;
     private GatewaySpecificationDTO $specificationDto;
+    public function __construct(IntegrationKey $integrationKey)
+    {
+        $this->integrationKey = $integrationKey;
+        parent::__construct();
+    }
 
-    protected function setHeaders(): self
+    protected function setHeaders(): static
     {
         $this->client->withHeaders([
             'Content-Type' => 'application/json'
@@ -36,7 +39,7 @@ class PaymobClient extends GatewayClient
 
     public function createPaymentOrder(CreateOrderRequestBuilder $requestBuilder): PaymobClient
     {
-        $response = $this->client->post(self::BASE_URL . 'ecommerce/orders', $requestBuilder->build());
+        $response = $this->post(PaymobClient::BASE_URL . 'ecommerce/orders', $requestBuilder);
 
         $this->response = CreateOrderResponse::make($response);
 
@@ -47,7 +50,7 @@ class PaymobClient extends GatewayClient
 
     public function createPaymentKey(PaymentKeyRequestBuilder $requestBuilder): PaymobClient
     {
-        $response = $this->client->post(self::BASE_URL . 'acceptance/payment_keys', $requestBuilder->build());
+        $response = $this->post(PaymobClient::BASE_URL . 'acceptance/payment_keys', $requestBuilder);
 
         $this->response = PaymentKeyResponse::make($response);
 
@@ -58,9 +61,9 @@ class PaymobClient extends GatewayClient
 
     public function payWithSavedToken(PayWithSavedTokenRequestBuilder $requestBuilder): PaymobClient
     {
-        $response = $this->client
-            ->timeout(self::PAY_WITH_SAVED_TOKEN_TIMEOUT)
-            ->post(self::BASE_URL . 'acceptance/payments/pay', $requestBuilder->build());
+        $this->client->timeout(PaymobClient::PAY_WITH_SAVED_TOKEN_TIMEOUT);
+
+        $response = $this->post(PaymobClient::BASE_URL . 'acceptance/payments/pay', $requestBuilder);
 
         $this->response = TransactionResponse::make($response);
 
@@ -69,8 +72,7 @@ class PaymobClient extends GatewayClient
 
     public function fetchTransactionByMerchantOrderId(FetchTransactionRequestBuilder $requestBuilder): self
     {
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post(self::BASE_URL . 'ecommerce/orders/transaction_inquiry', $requestBuilder->build());
+        $response = $this->post(PaymobClient::BASE_URL . 'ecommerce/orders/transaction_inquiry', $requestBuilder);
 
         $this->response = TransactionResponse::make($response);
 
@@ -79,8 +81,7 @@ class PaymobClient extends GatewayClient
 
     public function refund(RefundRequestBuilder $requestBuilder): self
     {
-        $response = $this->client
-            ->post(self::BASE_URL . 'acceptance/void_refund/refund', $requestBuilder->build());
+        $response = $this->post(PaymobClient::BASE_URL . 'acceptance/void_refund/refund', $requestBuilder);
 
         $this->response = TransactionResponse::make($response);
 
@@ -89,8 +90,7 @@ class PaymobClient extends GatewayClient
 
     public function voidRefund(VoidRequestBuilder $requestBuilder): self
     {
-        $response = $this->client
-            ->post(self::BASE_URL . 'acceptance/void_refund/void', $requestBuilder->build());
+        $response = $this->post(PaymobClient::BASE_URL . 'acceptance/void_refund/void', $requestBuilder);
 
         $this->response = new TransactionResponse($response);
 
@@ -99,7 +99,7 @@ class PaymobClient extends GatewayClient
 
     public function authenticate(): self
     {
-        $response = $this->client->post(self::BASE_URL . 'auth/tokens', [
+        $response = $this->client->post(PaymobClient::BASE_URL . 'auth/tokens', [
             'api_key' => $this->integrationKey->api_key,
         ]);
 
@@ -110,15 +110,9 @@ class PaymobClient extends GatewayClient
         return $this;
     }
 
-    public function setGatewaySpecification(GatewaySpecificationDTO $specificationDto): PaymobClient
+    public function setGatewaySpecification(GatewaySpecificationDTO $specificationDto): self
     {
         $this->specificationDto = $specificationDto;
-        return $this;
-    }
-
-    public function setIntegrationKey(IntegrationKeyInterface $integrationKey): self
-    {
-        $this->integrationKey = $integrationKey;
         return $this;
     }
 }

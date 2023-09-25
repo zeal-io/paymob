@@ -4,7 +4,6 @@ namespace Zeal\Paymob;
 
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Zeal\Paymob\Core\PaymobClient;
 
 class PaymobServiceProvider extends PackageServiceProvider
 {
@@ -16,10 +15,6 @@ class PaymobServiceProvider extends PackageServiceProvider
             __DIR__ . '/../config/payment.php',
             'payment'
         );
-
-        $this->app->singleton(PaymobClient::class, function () {
-            return new PaymobClient(config('payment.paymob.api_key'));
-        });
     }
 
     public function configurePackage(Package $package): void

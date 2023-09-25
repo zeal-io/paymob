@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Zeal\Paymob\Core\Responses;
 
 use Zeal\PaymentFramework\Enums\ResponseStatusEnum;
-use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\PaymentFramework\Responses\PaymentResponse;
 
-class CreateOrderResponse extends BasePaymobResponse
+class CreateOrderResponse extends PaymobResponse
 {
     private string $id;
 
-    public function toResponseObject(): BasePaymentResponse
+    public function toResponseObject(): PaymentResponse
     {
         return $this->setOrderId($this->responseBody['id']);
     }
@@ -21,13 +21,6 @@ class CreateOrderResponse extends BasePaymobResponse
         return [
             'id' => $this->id,
         ];
-    }
-
-    public function setStatus(): BasePaymentResponse
-    {
-        $this->status = $this->hasErrors ? ResponseStatusEnum::SUCCESS : ResponseStatusEnum::FAILED;
-
-        return $this;
     }
 
     private function setOrderId(string $id): self

@@ -6,14 +6,14 @@ namespace Zeal\Paymob\Core\Responses;
 
 use Illuminate\Http\Client\Response;
 use Zeal\PaymentFramework\Enums\ResponseStatusEnum;
-use Zeal\PaymentFramework\Responses\BasePaymentResponse;
+use Zeal\PaymentFramework\Responses\PaymentResponse;
 use Zeal\Paymob\Core\Exceptions\InvalidAuthenticationException;
 
-class AuthenticationResponse extends BasePaymobResponse
+class AuthenticationResponse extends PaymobResponse
 {
     private string $token;
 
-    public function toResponseObject(): BasePaymentResponse
+    public function toResponseObject(): PaymentResponse
     {
         return $this->setToken();
     }
@@ -22,7 +22,6 @@ class AuthenticationResponse extends BasePaymobResponse
     {
         return [];
     }
-
 
     private function setToken(): self
     {
