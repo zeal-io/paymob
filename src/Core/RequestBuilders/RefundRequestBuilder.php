@@ -8,7 +8,7 @@ class RefundRequestBuilder extends BaseRequestBuilder
 {
     private string $authToken;
     private string $amountInCents;
-    private string $transactionId;
+    private int $transactionId;
 
     public function toArray(): array
     {
@@ -46,7 +46,7 @@ class RefundRequestBuilder extends BaseRequestBuilder
         return $this->transactionId;
     }
 
-    public function setTransactionId(string $transactionId): RefundRequestBuilder
+    public function setTransactionId(int $transactionId): RefundRequestBuilder
     {
         $this->transactionId = $transactionId;
         return $this;

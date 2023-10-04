@@ -6,14 +6,13 @@ use Illuminate\Http\Resources\MissingValue;
 
 class ErrorResponse extends \Zeal\PaymentFramework\Responses\ErrorResponse
 {
-
     public function toResponseObject(): self
     {
         return $this
-            ->setResponseMessage($this->responseBody['responseMessage'] ?? null)
-            ->setDetailedResponseMessage($this->responseBody['detailedResponseMessage'] ?? null)
-            ->setStatusCode($this->responseBody['responseCode'])
-            ->setDetailedStatusCode($this->responseBody['detailedResponseCode']);
+            ->setResponseMessage($this->responseBody['detail'] ?? null)
+            ->setDetailedResponseMessage($this->responseBody['detail'] ?? null)
+            ->setStatusCode($this->responseBody['status_code'] ?? $this->httpStatus())
+            ->setDetailedStatusCode($this->responseBody['code'] ?? null);
     }
 
     public function toArray(): array

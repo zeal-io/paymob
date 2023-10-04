@@ -11,8 +11,8 @@ use Zeal\Paymob\Core\Exceptions\UnauthenticatedException;
 
 class TransactionResponse extends PaymobResponse
 {
-    private string $transactionId;
-    private string $orderReference;
+    private int $transactionId;
+    private int $orderReference;
 
     public function toResponseObject(): PaymentResponse
     {
@@ -31,14 +31,14 @@ class TransactionResponse extends PaymobResponse
 
     private function setTransactionId(): self
     {
-        $this->transactionId = $this->responseBody['id'];
+        $this->transactionId = $this->responseBody['obj']['id'];
 
         return $this;
     }
 
     public function setOrderReference(): self
     {
-        $this->orderReference = $this->responseBody['order'];
+        $this->orderReference = $this->responseBody['obj']['order']['id'];
         return $this;
     }
 }

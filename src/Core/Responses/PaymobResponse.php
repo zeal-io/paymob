@@ -11,16 +11,7 @@ use Zeal\Paymob\Core\Exceptions\InvalidAuthenticationException;
 
 abstract class PaymobResponse extends PaymentResponse
 {
-    protected function setStatus(): static
-    {
-        $this->status = match (true) {
-            200 >= $this->response->status() && $this->response->status() < 300 => ResponseStatusEnum::SUCCESS,
-            400 >= $this->response->status() && $this->response->status() < 600 => ResponseStatusEnum::FAILED,
-        };
-        return $this;
-    }
-
-    public function errorResponse(): ErrorResponse
+    public function setErrorResponse(): ErrorResponse
     {
         return ErrorResponse::make($this->response);
     }
@@ -39,5 +30,10 @@ abstract class PaymobResponse extends PaymentResponse
         }
 
         return $this;
+    }
+
+    public function getGatewayOrderId(): ?int
+    {
+        return $this->responseBody['id'] ?? $this->responseBody['obj']['id'];
     }
 }

@@ -6,12 +6,12 @@ use Zeal\PaymentFramework\RequestBuilders\BaseRequestBuilder;
 
 class VoidRequestBuilder extends BaseRequestBuilder
 {
-    private string $transactionId;
+    private int $transactionId;
     private string $authToken;
 
     public function toArray(): array
     {
-        return[
+        return [
             'transaction_id' => $this->transactionId,
             'token' => $this->authToken,
         ];
@@ -22,7 +22,7 @@ class VoidRequestBuilder extends BaseRequestBuilder
         return $this->transactionId;
     }
 
-    public function setTransactionId(string $transactionId): VoidRequestBuilder
+    public function setTransactionId(int $transactionId): VoidRequestBuilder
     {
         $this->transactionId = $transactionId;
         return $this;

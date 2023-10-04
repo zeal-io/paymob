@@ -9,7 +9,7 @@ use Zeal\PaymentFramework\Responses\PaymentResponse;
 
 class CreateOrderResponse extends PaymobResponse
 {
-    private string $id;
+    private mixed $id;
 
     public function toResponseObject(): PaymentResponse
     {
@@ -23,14 +23,14 @@ class CreateOrderResponse extends PaymobResponse
         ];
     }
 
-    private function setOrderId(string $id): self
+    private function setOrderId(mixed $id): self
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function getId(): string
+    public function getId(): mixed
     {
         return $this->id;
     }

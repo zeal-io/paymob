@@ -4,7 +4,9 @@ namespace Zeal\Paymob\Core;
 
 use Zeal\PaymentFramework\Client\GatewayClient;
 use Zeal\Paymob\Core\DTOs\GatewaySpecificationDTO;
+use Zeal\Paymob\Core\Exceptions\InvalidAuthenticationException;
 use Zeal\Paymob\Core\Models\IntegrationKey;
+use Zeal\Paymob\Core\Models\PaymobIntegrationKey;
 use Zeal\Paymob\Core\RequestBuilders\CreateOrderRequestBuilder;
 use Zeal\Paymob\Core\RequestBuilders\FetchTransactionRequestBuilder;
 use Zeal\Paymob\Core\RequestBuilders\PaymentKeyRequestBuilder;
@@ -20,12 +22,18 @@ class PaymobClient extends GatewayClient
 {
     const BASE_URL = 'https://accept.paymob.com/api/';
     const PAY_WITH_SAVED_TOKEN_TIMEOUT = 14;
-    private IntegrationKey $integrationKey;
+    private PaymobIntegrationKey $integrationKey;
     private GatewaySpecificationDTO $specificationDto;
-    public function __construct(IntegrationKey $integrationKey)
+
+    public function __construct(PaymobIntegrationKey $integrationKey)
     {
         $this->integrationKey = $integrationKey;
         parent::__construct();
+    }
+
+    public static function make(PaymobIntegrationKey $integrationKey): static
+    {
+        return new static($integrationKey);
     }
 
     protected function setHeaders(): static
@@ -41,7 +49,8 @@ class PaymobClient extends GatewayClient
     {
         $response = $this->post(PaymobClient::BASE_URL . 'ecommerce/orders', $requestBuilder);
 
-        $this->response = CreateOrderResponse::make($response);
+        $this->response = CreateOrderResponse::make($response)
+            ->then(fn(CreateOrderResponse $response) => $this->specificationDto->orderId = $response->getId());
 
         $this->specificationDto->orderId = $this->response->getId();
 
@@ -88,24 +97,24 @@ class PaymobClient extends GatewayClient
         return $this;
     }
 
-    public function voidRefund(VoidRequestBuilder $requestBuilder): self
+    public function void(VoidRequestBuilder $requestBuilder): self
     {
         $response = $this->post(PaymobClient::BASE_URL . 'acceptance/void_refund/void', $requestBuilder);
 
-        $this->response = new TransactionResponse($response);
+        $this->response = TransactionResponse::make($response);
 
         return $this;
     }
 
     public function authenticate(): self
     {
-        $response = $this->client->post(PaymobClient::BASE_URL . 'auth/tokens', [
+        $response = $this->post(PaymobClient::BASE_URL . 'auth/tokens', [
             'api_key' => $this->integrationKey->api_key,
         ]);
 
-        $this->response = AuthenticationResponse::make($response);
+        $this->response = AuthenticationResponse::make($response)
+            ->then(fn(AuthenticationResponse $response) => $this->specificationDto->token = $response->getToken());
 
-        $this->specificationDto->token = $this->response->getToken();
 
         return $this;
     }
