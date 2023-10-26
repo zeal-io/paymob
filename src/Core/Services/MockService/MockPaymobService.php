@@ -6,6 +6,19 @@ use Zeal\PaymentFramework\Services\MockService\BaseMockService;
 
 class MockPaymobService extends BaseMockService
 {
+    public function mockAll(): static
+    {
+        $this
+            ->obtainToken()
+            ->createOrder()
+            ->createPaymentKey()
+            ->pay()
+            ->refund()
+            ->void();
+
+        return $this;
+    }
+
     public function obtainToken(int $httpCode = 200, string $payloadName = null): self
     {
         $payload = $payloadName ?? $this->getPayloadUsingStatusCode($httpCode);
