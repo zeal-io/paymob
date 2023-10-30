@@ -9,8 +9,8 @@ return [
     'integration_key' => [
         'table_name' => 'integration_keys',
         'columns' => [
-            'public_key' => 'merchant_code',
-            'secret_key' => 'api_key',
+            'merchant_code' => 'public_key',
+            'api_key' => 'secret_key',
         ]
     ]
 ];

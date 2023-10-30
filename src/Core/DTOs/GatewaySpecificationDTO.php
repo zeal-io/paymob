@@ -5,6 +5,7 @@ namespace Zeal\Paymob\Core\DTOs;
 use Illuminate\Support\Facades\Validator;
 use Zeal\PaymentFramework\DTOs\PaymentDto;
 use Zeal\PaymentFramework\Interfaces\GatewaySpecificationInterface;
+use Zeal\PaymentFramework\Support\HandleExceptionSupport;
 
 class GatewaySpecificationDTO implements GatewaySpecificationInterface
 {
@@ -46,6 +47,10 @@ class GatewaySpecificationDTO implements GatewaySpecificationInterface
 
     public static function buildGatewaySpecification(PaymentDto $paymentDTO): static
     {
+        if (! $paymentDTO->paymentSettings->business->paymentServiceIntegrationKey) {
+            HandleExceptionSupport::badRequest('Payment service integration key is not set');
+        }
+
         if ($paymentDTO->paymentInfo->transaction->getGatewaySpecification()) {
             $specification = $paymentDTO->paymentInfo->transaction->getGatewaySpecification();
             return new self(

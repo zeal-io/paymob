@@ -11,21 +11,17 @@ trait HasIntegrationKey
         $this->table = config('paymob.integration_key.table_name');
     }
 
-    protected function username(): Attribute
+    protected function getMerchantCodeAttribute()
     {
-        $usernameDatabaseColumn = config('paymob.integration_key.columns.username');
-        return Attribute::make(
-            get: fn($value) => $this->attributes[$usernameDatabaseColumn],
-            set: fn($value) => $this->attributes[$usernameDatabaseColumn] = $value,
-        );
+        $usernameDatabaseColumn = config('paymob.integration_key.columns.merchant_code');
+
+        return $this->attributes[$usernameDatabaseColumn];
     }
 
-    protected function password(): Attribute
+    protected function getApiKeyAttribute(): Attribute
     {
-        $passwordDatabaseColumn = config('paymob.integration_key.columns.password');
-        return Attribute::make(
-            get: fn($value) => $this->attributes[$passwordDatabaseColumn],
-            set: fn($value) => $this->attributes[$passwordDatabaseColumn] = $value,
-        );
+        $passwordDatabaseColumn = config('paymob.integration_key.columns.api_key');
+
+        return $this->attributes[$passwordDatabaseColumn];
     }
 }
