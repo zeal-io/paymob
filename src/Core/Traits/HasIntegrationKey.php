@@ -18,7 +18,7 @@ trait HasIntegrationKey
         return $this->attributes[$usernameDatabaseColumn];
     }
 
-    protected function getApiKeyAttribute(): Attribute
+    protected function getApiKeyAttribute()
     {
         $passwordDatabaseColumn = config('paymob.integration_key.columns.api_key');
 
