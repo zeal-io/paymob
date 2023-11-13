@@ -1,0 +1,5 @@
+{
+    "detail": "Invalid token.",
+    "status_code": 401,
+    "code": "authentication_failed"
+}
