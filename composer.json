@@ -20,7 +20,7 @@
   "type": "package",
   "require": {
     "php": ">=7.2.5",
-    "illuminate/support": "^8.49"
+    "illuminate/support": "^8.49|^10.0"
   },
   "autoload": {
     "psr-4": {
