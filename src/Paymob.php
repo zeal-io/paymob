@@ -72,6 +72,16 @@ final class Paymob
      */
     public function createPaymentKey(PaymentKey $paymentKey): Paymob
     {
+        if ($paymentKey->provider === 'paymob_flash') {
+            $this->createIntentionPaymentKey($paymentKey);
+            return $this;
+        }
+
+        $this->createAcceptancePaymentKey($paymentKey);
+        return $this;
+    }
+    public function createAcceptancePaymentKey(PaymentKey $paymentKey): Paymob
+    {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'acceptance/payment_keys', [
                 'auth_token'     => $this->authToken,
@@ -99,6 +109,40 @@ final class Paymob
 
         $this->response = new PaymentKeyResponse($response);
         $this->paymentKeyToken = $this->response->getPaymentKeyToken();
+
+        return $this;
+    }
+
+    public function createIntentionPaymentKey(PaymentKey $paymentKey): Paymob
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Token ' . $paymentKey->secretKey,
+            'Content-Type' => 'application/json',
+        ])->post($this->api . 'v1/intention/', [
+                'amount' => $paymentKey->amount,
+                'currency' => $paymentKey->currency,
+                'payment_methods' => [$paymentKey->motoIntegrationId],
+                'items' => [],
+                'special_reference' => $paymentKey->orderId,
+                'billing_data' => [
+                    'apartment' => '',
+                    'email' => '',
+                    'floor' => '',
+                    'first_name' => 'NA',
+                    'last_name' => 'NA',
+                    'street' => '',
+                    'building' => '',
+                    'phone_number' => 'NA',
+                    'shipping_method' => '',
+                    'postal_code' => '',
+                    'city' => '',
+                    'country' => '',
+                    'state' => '',
+                ],
+            ]);
+
+        $this->response = new PaymentKeyResponse($response);
+        $this->paymentKeyToken = $this->response->getIntentionPaymentKeyToken();
 
         return $this;
     }
