@@ -69,6 +69,14 @@ final class PaymentKeyResponse
         return $this->body->token;
     }
 
+    /**
+     * Return card token
+     */
+    public function getIntentionPaymentKeyToken(): string
+    {
+        return $this->body->payment_keys['key'];
+    }
+
     private function handleResponseExceptions(): void
     {
         switch ($this->response->getStatusCode()) {
