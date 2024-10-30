@@ -74,7 +74,7 @@ final class PaymentKeyResponse
      */
     public function getIntentionPaymentKeyToken(): string
     {
-        return $this->body->payment_keys['key'];
+        return $this->body->payment_keys[0]->key;
     }
 
     private function handleResponseExceptions(): void

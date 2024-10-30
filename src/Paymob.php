@@ -28,7 +28,7 @@ final class Paymob
      *
      * @var string
      */
-    private $api = 'https://accept.paymob.com/api/';
+    private $api = 'https://accept.paymob.com/';
 
     private $response;
 
@@ -50,7 +50,7 @@ final class Paymob
     {
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'ecommerce/orders', [
+            ->post($this->api . 'api/ecommerce/orders', [
                 'auth_token'        => $this->authToken,
                 'delivery_needed'   => $order->deliveryNeeded,
                 'amount_cents'      => $order->amount,
@@ -83,7 +83,7 @@ final class Paymob
     public function createAcceptancePaymentKey(PaymentKey $paymentKey): Paymob
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/payment_keys', [
+            ->post($this->api . 'api/acceptance/payment_keys', [
                 'auth_token'     => $this->authToken,
                 'amount_cents'   => $paymentKey->amount,
                 'expiration'     => $paymentKey->expiration,
@@ -118,7 +118,7 @@ final class Paymob
         $response = Http::withHeaders([
             'Authorization' => 'Token ' . $paymentKey->secretKey,
             'Content-Type' => 'application/json',
-        ])->post($this->api . 'v1/intention/', [
+        ])->post($this->api . '/v1/intention/', [
                 'amount' => $paymentKey->amount,
                 'currency' => $paymentKey->currency,
                 'payment_methods' => [$paymentKey->motoIntegrationId],
@@ -152,7 +152,7 @@ final class Paymob
         try {
             $response = Http::timeout(16)
                 ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($this->api . 'acceptance/payments/pay', [
+                ->post($this->api . 'api/acceptance/payments/pay', [
                     'source'        => [
                         'identifier' => $cardToken,
                         'subtype'    => 'TOKEN',
@@ -171,7 +171,7 @@ final class Paymob
     public function syncTransactionResponse($uuid)
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'ecommerce/orders/transaction_inquiry', [
+            ->post($this->api . 'api/ecommerce/orders/transaction_inquiry', [
                 'merchant_order_id' => $uuid,
                 'auth_token'        => $this->authToken,
             ]);
@@ -183,7 +183,7 @@ final class Paymob
     public function refund(array $data)
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/void_refund/refund', [
+            ->post($this->api . 'api/acceptance/void_refund/refund', [
                 'auth_token'     => $this->authToken,
                 'amount_cents'   => $data['amount'],
                 'transaction_id' => $data['transaction_id'],
@@ -197,7 +197,7 @@ final class Paymob
     public function voidRefund(string $transactionId)
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($this->api . 'acceptance/void_refund/void?token=' . $this->authToken, [
+            ->post($this->api . 'api/acceptance/void_refund/void?token=' . $this->authToken, [
                 'transaction_id' => $transactionId,
             ]);
 
@@ -212,7 +212,7 @@ final class Paymob
     private function authenticate(string $apiKey): void
     {
         $response = Http::withHeaders(['Content-Type' => 'application/json',])
-            ->post($this->api . 'auth/tokens', ['api_key' => $apiKey]);
+            ->post($this->api . 'api/auth/tokens', ['api_key' => $apiKey]);
 
         $this->response = new AuthenticationResponse($response);
         $this->authToken = $this->response->getAuthToken();
