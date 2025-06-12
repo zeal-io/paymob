@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
@@ -16,29 +17,17 @@ use Zeal\Paymob\Response\PaymentKeyResponse;
 
 final class Paymob
 {
-    /**
-     * Order id returned from paymob
-     *
-     * @var int
-     */
     public $orderId;
 
-    /**
-     * Base API Endpont
-     *
-     * @var string
-     */
     private $api = 'https://accept.paymob.com/';
-
     private $response;
-
     private $paymentKeyToken;
+    private $authToken;
+    private $apiKey;
 
     public function __construct(string $apiKey)
     {
-        $this->authenticate($apiKey);
-
-        return $this;
+        $this->apiKey = $apiKey;
     }
 
     public function getPaymentKeyToken()
@@ -48,6 +37,7 @@ final class Paymob
 
     public function createOrder(PaymentOrder $order): Paymob
     {
+        $this->ensureAuthToken();
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/ecommerce/orders', [
@@ -65,23 +55,19 @@ final class Paymob
         return $this;
     }
 
-    /**
-     * Check out an order
-     *
-     * @param array $data order details
-     */
     public function createPaymentKey(PaymentKey $paymentKey): Paymob
     {
         if ($paymentKey->provider === 'paymob_flash') {
-            $this->createIntentionPaymentKey($paymentKey);
-            return $this;
+            return $this->createIntentionPaymentKey($paymentKey);
         }
 
-        $this->createAcceptancePaymentKey($paymentKey);
-        return $this;
+        return $this->createAcceptancePaymentKey($paymentKey);
     }
+
     public function createAcceptancePaymentKey(PaymentKey $paymentKey): Paymob
     {
+        $this->ensureAuthToken();
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/acceptance/payment_keys', [
                 'auth_token'     => $this->authToken,
@@ -119,27 +105,27 @@ final class Paymob
             'Authorization' => 'Token ' . $paymentKey->secretKey,
             'Content-Type' => 'application/json',
         ])->post($this->api . '/v1/intention/', [
-                'amount' => $paymentKey->amount,
-                'currency' => $paymentKey->currency,
-                'payment_methods' => [$paymentKey->motoIntegrationId],
-                'items' => [],
-                'special_reference' => $paymentKey->orderId,
-                'billing_data' => [
-                    'apartment' => '',
-                    'email' => '',
-                    'floor' => '',
-                    'first_name' => 'NA',
-                    'last_name' => 'NA',
-                    'street' => '',
-                    'building' => '',
-                    'phone_number' => 'NA',
-                    'shipping_method' => '',
-                    'postal_code' => '',
-                    'city' => '',
-                    'country' => '',
-                    'state' => '',
-                ],
-            ]);
+            'amount' => $paymentKey->amount,
+            'currency' => $paymentKey->currency,
+            'payment_methods' => [$paymentKey->motoIntegrationId],
+            'items' => [],
+            'special_reference' => $paymentKey->orderId,
+            'billing_data' => [
+                'apartment' => '',
+                'email' => '',
+                'floor' => '',
+                'first_name' => 'NA',
+                'last_name' => 'NA',
+                'street' => '',
+                'building' => '',
+                'phone_number' => 'NA',
+                'shipping_method' => '',
+                'postal_code' => '',
+                'city' => '',
+                'country' => '',
+                'state' => '',
+            ],
+        ]);
 
         $this->response = new PaymentKeyResponse($response);
         $this->paymentKeyToken = $this->response->getIntentionPaymentKeyToken();
@@ -150,6 +136,8 @@ final class Paymob
     public function payWithSavedToken(string $cardToken): Paymob
     {
         try {
+            $this->ensureAuthToken();
+
             $response = Http::timeout(16)
                 ->withHeaders(['Content-Type' => 'application/json'])
                 ->post($this->api . 'api/acceptance/payments/pay', [
@@ -170,6 +158,8 @@ final class Paymob
 
     public function syncTransactionResponse($uuid)
     {
+        $this->ensureAuthToken();
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/ecommerce/orders/transaction_inquiry', [
                 'merchant_order_id' => $uuid,
@@ -182,6 +172,8 @@ final class Paymob
 
     public function refund(array $data)
     {
+        $this->ensureAuthToken();
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/acceptance/void_refund/refund', [
                 'auth_token'     => $this->authToken,
@@ -196,6 +188,8 @@ final class Paymob
 
     public function voidRefund(string $transactionId)
     {
+        $this->ensureAuthToken();
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/acceptance/void_refund/void?token=' . $this->authToken, [
                 'transaction_id' => $transactionId,
@@ -204,17 +198,33 @@ final class Paymob
         $this->response = new FetchPaymentTransactionResponse($response);
         return $this;
     }
+
     public function response()
     {
         return $this->response;
     }
 
-    private function authenticate(string $apiKey): void
+    private function authenticate(): string
     {
-        $response = Http::withHeaders(['Content-Type' => 'application/json',])
-            ->post($this->api . 'api/auth/tokens', ['api_key' => $apiKey]);
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($this->api . 'api/auth/tokens', ['api_key' => $this->apiKey]);
 
         $this->response = new AuthenticationResponse($response);
-        $this->authToken = $this->response->getAuthToken();
+
+        return $this->response->getAuthToken();
+    }
+
+    private function ensureAuthToken(): void
+    {
+        if (!$this->authToken) {
+            $this->authToken = Cache::remember($this->getCacheKey(), 300, function () {
+                return $this->authenticate();
+            });
+        }
+    }
+
+    private function getCacheKey(): string
+    {
+        return 'paymob_auth_token_' . md5($this->apiKey);
     }
 }
