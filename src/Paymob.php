@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
@@ -217,14 +216,7 @@ final class Paymob
     private function ensureAuthToken(): void
     {
         if (!$this->authToken) {
-            $this->authToken = Cache::remember($this->getCacheKey(), 300, function () {
-                return $this->authenticate();
-            });
+            $this->authToken = $this->authenticate();
         }
-    }
-
-    private function getCacheKey(): string
-    {
-        return 'paymob_auth_token_' . md5($this->apiKey);
     }
 }
