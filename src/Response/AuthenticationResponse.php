@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob\Response;
 
-use App\Models\Log;
 use Zeal\Paymob\Exceptions\InvalidAuthenticationException;
 use Illuminate\Http\Client\Response;
 
@@ -31,11 +30,6 @@ final class AuthenticationResponse
         $this->response = $response;
 
         $this->body = (object) json_decode((string) $response->getBody());
-
-        Log::create([
-            'key' => 'paymob_authentication_response',
-            'payload' => json_encode($this->body),
-        ]);
 
         $this->handleResponseExceptions();
     }
