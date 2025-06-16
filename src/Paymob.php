@@ -217,7 +217,7 @@ final class Paymob
     private function ensureAuthToken(): void
     {
         if (!$this->authToken) {
-            $this->authToken = Cache::remember($this->getCacheKey(), 3600, function () {
+            $this->authToken = Cache::remember($this->getCacheKey(), 2700, function () {
                 return $this->authenticate();
             });
         }
