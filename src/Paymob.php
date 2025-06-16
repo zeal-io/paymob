@@ -6,6 +6,7 @@ namespace Zeal\Paymob;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use App\Models\Log;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
@@ -206,6 +207,11 @@ final class Paymob
 
     private function authenticate(): string
     {
+        Log::create([
+            'key' => 'paymob_authentication_request',
+            'payload' => json_encode(['api_key' => $this->apiKey]),
+        ]);
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($this->api . 'api/auth/tokens', ['api_key' => $this->apiKey]);
 
