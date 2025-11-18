@@ -6,6 +6,8 @@ namespace Zeal\Paymob;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Zeal\Paymob\Exceptions\InvalidPaymentException;
+use Zeal\Paymob\Exceptions\UnauthenticatedException;
 use Zeal\Paymob\Models\PaymentKey;
 use Zeal\Paymob\Models\PaymentOrder;
 use Zeal\Paymob\Response\AuthenticationResponse;
@@ -149,7 +151,14 @@ final class Paymob
                 ]);
 
             $this->response = new PayWithSavedTokenResponse($response);
+        } catch (InvalidPaymentException $e) {
+            // Re-throw application exceptions - they should bubble up
+            throw $e;
+        } catch (UnauthenticatedException $e) {
+            // Re-throw application exceptions - they should bubble up
+            throw $e;
         } catch (\Exception $e) {
+            // Only catch connection/timeout errors for ConnectExceptionResponse
             $this->response = new ConnectExceptionResponse($e);
         }
 
