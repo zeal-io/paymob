@@ -53,12 +53,22 @@ final class ConnectExceptionResponse
     /**
      * Parses guzzle response body
      *
-     * @param \Exception 
+     * @param \Exception $exception
      */
     public function __construct(\Exception $exception)
     {
         $this->exception = $exception;
-        $this->context = $this->exception->getHandlerContext();
+        
+        // Only Guzzle exceptions have getHandlerContext() method
+        // Check if this is a connection/request exception (Guzzle exception)
+        if (method_exists($exception, 'getHandlerContext')) {
+            /** @var \GuzzleHttp\Exception\RequestException $exception */
+            $this->context = $exception->getHandlerContext();
+        } else {
+            // Not a Guzzle exception - no handler context available
+            $this->context = [];
+            $this->failed = true;
+        }
 
         $this->handleException();
     }
@@ -81,8 +91,10 @@ final class ConnectExceptionResponse
 
     private function handleException(): void
     {
-        if (isset($this->context['errno']) && $this->context['errno'] = 28) {
+        // Check for timeout error (errno 28 = ETIMEDOUT)
+        if (isset($this->context['errno']) && $this->context['errno'] == 28) {
             $this->timedout = true;
+            $this->failed = true;
         }
     }
 }
