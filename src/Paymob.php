@@ -37,7 +37,7 @@ final class Paymob
     public function checkResponseStatusCode(HttpResponse $response)
     {
         if ($response->failed()) {
-            throw new \Exception(
+            throw new InvalidPaymentException(
                 'Response status code is not 200. Body: ' . $response->body()
             );
         }
