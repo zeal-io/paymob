@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zeal\Paymob;
 
+use Illuminate\Http\Client\Response as HttpResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Zeal\Paymob\Exceptions\InvalidPaymentException;
@@ -30,6 +31,16 @@ final class Paymob
     public function __construct(string $apiKey)
     {
         $this->apiKey = $apiKey;
+    }
+
+    // create a method to check response status code and throw exception if not 200
+    public function checkResponseStatusCode(HttpResponse $response)
+    {
+        if ($response->failed()) {
+            throw new \Exception(
+                'Response status code is not 200. Body: ' . $response->body()
+            );
+        }
     }
 
     public function getPaymentKeyToken()
@@ -94,6 +105,7 @@ final class Paymob
                     'state'           => 'NA',
                 ],
             ]);
+        $this->checkResponseStatusCode($response);
 
         $this->response = new PaymentKeyResponse($response);
         $this->paymentKeyToken = $this->response->getPaymentKeyToken();
@@ -128,6 +140,8 @@ final class Paymob
                 'state' => '',
             ],
         ]);
+
+        $this->checkResponseStatusCode($response);
 
         $this->response = new PaymentKeyResponse($response);
         $this->paymentKeyToken = $this->response->getIntentionPaymentKeyToken();
