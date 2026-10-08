@@ -2,7 +2,13 @@
 
 <p align="center"><i>`zeal-io/paymob`: Laravel SDK for Paymob payment processing - authentication, order creation, payment keys (acceptance and intention), saved-token payments, refunds and voids, with typed response objects.</i></p>
 
-<p align="center">![Language](https://img.shields.io/badge/lang-PHP-777BB4) ![Stack](https://img.shields.io/badge/stack-Laravel%20package-339933) ![Status](https://img.shields.io/badge/status-active-2EA44F) ![Visibility](https://img.shields.io/badge/repo-public-24292F) ![License](https://img.shields.io/badge/license-Custom-blue)</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/lang-PHP-777BB4" alt="Language">
+  <img src="https://img.shields.io/badge/stack-Laravel%20package-339933" alt="Stack">
+  <img src="https://img.shields.io/badge/status-active-2EA44F" alt="Status">
+  <img src="https://img.shields.io/badge/repo-public-24292F" alt="Visibility">
+  <img src="https://img.shields.io/badge/license-Custom-blue" alt="License">
+</p>
 
 ---
 ## Contents
