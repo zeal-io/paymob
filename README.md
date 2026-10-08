@@ -1,6 +1,6 @@
 <h1 align="center">Paymob (Laravel package)</h1>
 
-<p align="center"><i>`zeal-io/paymob`: Laravel SDK for Paymob payment processing - authentication, order creation, payment keys (acceptance and intention), saved-token payments, refunds and voids, with typed response objects.</i></p>
+<p align="center"><i><code>zeal-io/paymob</code>: Laravel SDK for Paymob payment processing - authentication, order creation, payment keys (acceptance and intention), saved-token payments, refunds and voids, with typed response objects.</i></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/lang-PHP-777BB4" alt="Language">
